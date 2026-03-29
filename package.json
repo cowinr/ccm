@@ -1,0 +1,94 @@
+{
+  "name": "claude-code-monitor",
+  "displayName": "Claude Code Monitor",
+  "description": "Monitor Claude Code usage limits with visual progress bars",
+  "publisher": "cowinr",
+  "version": "0.1.0",
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Other"],
+  "keywords": ["claude", "anthropic", "usage", "monitor", "limits"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [{
+        "id": "ccm",
+        "title": "Claude Code Monitor",
+        "icon": "media/icon.svg"
+      }]
+    },
+    "views": {
+      "ccm": [{
+        "type": "webview",
+        "id": "ccm.usagePanel",
+        "name": "Usage"
+      }]
+    },
+    "configuration": {
+      "title": "Claude Code Monitor",
+      "properties": {
+        "ccm.refreshIntervalSec": {
+          "type": "number",
+          "default": 60,
+          "minimum": 10,
+          "description": "How often to refresh usage data (seconds)"
+        },
+        "ccm.sessionDurationHours": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "description": "Estimated session duration for reset calculation (hours)"
+        },
+        "ccm.weeklyLimitUsd": {
+          "type": "number",
+          "default": 100,
+          "minimum": 1,
+          "description": "Estimated weekly spending limit (USD)"
+        },
+        "ccm.sessionLimitUsd": {
+          "type": "number",
+          "default": 72.28,
+          "minimum": 1,
+          "description": "Estimated session spending limit (USD)"
+        },
+        "ccm.plan": {
+          "type": "string",
+          "default": "max5",
+          "enum": ["pro", "max5", "max20"],
+          "description": "Your Anthropic plan (affects default limits)"
+        },
+        "ccm.dataPath": {
+          "type": "string",
+          "default": "",
+          "description": "Custom path to Claude projects data (defaults to ~/.claude/projects)"
+        }
+      }
+    },
+    "commands": [
+      { "command": "ccm.refresh", "title": "Claude Code Monitor: Refresh" },
+      { "command": "ccm.openSettings", "title": "Claude Code Monitor: Open Settings" }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "jest",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.40.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.0",
+    "@vscode/test-electron": "^2.3.0",
+    "@vscode/vsce": "^2.19.0"
+  },
+  "dependencies": {}
+}
