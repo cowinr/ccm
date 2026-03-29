@@ -41,9 +41,23 @@
         },
         "ccm.weeklyLimitUsd": {
           "type": "number",
-          "default": 100,
+          "default": 1000,
           "minimum": 1,
-          "description": "Estimated weekly spending limit (USD)"
+          "description": "Estimated weekly spending limit in API-equivalent USD"
+        },
+        "ccm.weeklyResetDay": {
+          "type": "number",
+          "default": 5,
+          "minimum": 0,
+          "maximum": 6,
+          "description": "Day of week for weekly reset (0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat)"
+        },
+        "ccm.weeklyResetHour": {
+          "type": "number",
+          "default": 9,
+          "minimum": 0,
+          "maximum": 23,
+          "description": "Hour of day for weekly reset (local time, 0-23)"
         },
         "ccm.sessionLimitUsd": {
           "type": "number",

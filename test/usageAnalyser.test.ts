@@ -22,6 +22,8 @@ describe('UsageAnalyser', () => {
       sessionDurationHours: 5,
       weeklyLimitUsd: 100,
       sessionLimitUsd: 72.28,
+      weeklyResetDay: 5,
+      weeklyResetHour: 9,
     });
   });
 
@@ -91,7 +93,7 @@ describe('UsageAnalyser', () => {
     it('sums costs for entries in the current week', () => {
       const now = new Date('2026-03-29T14:00:00Z'); // Saturday
       const entries: UsageEntry[] = [
-        makeEntry({ timestamp: new Date('2026-03-24T10:00:00Z') }), // Monday
+        makeEntry({ timestamp: new Date('2026-03-28T10:00:00Z') }), // Friday (within reset window)
         makeEntry({ timestamp: new Date('2026-03-29T10:00:00Z') }), // Saturday
       ];
 
@@ -152,6 +154,8 @@ describe('UsageAnalyser', () => {
         sessionDurationHours: 3,
         weeklyLimitUsd: 200,
         sessionLimitUsd: 50,
+        weeklyResetDay: 5,
+        weeklyResetHour: 9,
       });
 
       const now = new Date('2026-03-29T14:00:00Z');

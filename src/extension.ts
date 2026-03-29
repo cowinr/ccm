@@ -67,8 +67,10 @@ function loadAnalyserConfig(): AnalyserConfig {
   const config = vscode.workspace.getConfiguration('ccm');
   return {
     sessionDurationHours: config.get('sessionDurationHours', 5),
-    weeklyLimitUsd: config.get('weeklyLimitUsd', 100),
+    weeklyLimitUsd: config.get('weeklyLimitUsd', 1000),
     sessionLimitUsd: config.get('sessionLimitUsd', 72.28),
+    weeklyResetDay: config.get('weeklyResetDay', 5),
+    weeklyResetHour: config.get('weeklyResetHour', 9),
   };
 }
 

@@ -5,6 +5,8 @@ export interface AnalyserConfig {
   sessionDurationHours: number;
   weeklyLimitUsd: number;
   sessionLimitUsd: number;
+  weeklyResetDay: number;  // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+  weeklyResetHour: number; // 0-23, local time
 }
 
 export class UsageAnalyser {
@@ -92,13 +94,17 @@ export class UsageAnalyser {
 
   private getWeekStart(date: Date): Date {
     const d = new Date(date);
-    const day = d.getUTCDay();
-    const diff = day === 0 ? 6 : day - 1;
-    d.setUTCDate(d.getUTCDate() - diff);
-    d.setUTCHours(9, 0, 0, 0);
+    const currentDay = d.getDay(); // 0=Sun..6=Sat, local time
+    const resetDay = this.config.weeklyResetDay;
+
+    let daysSinceReset = currentDay - resetDay;
+    if (daysSinceReset < 0) daysSinceReset += 7;
+
+    d.setDate(d.getDate() - daysSinceReset);
+    d.setHours(this.config.weeklyResetHour, 0, 0, 0);
 
     if (d > date) {
-      d.setUTCDate(d.getUTCDate() - 7);
+      d.setDate(d.getDate() - 7);
     }
 
     return d;
