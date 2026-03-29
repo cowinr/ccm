@@ -1,0 +1,136 @@
+:root {
+  --bg: #1a1a1a;
+  --surface: #2a2a2a;
+  --text-primary: #e0e0e0;
+  --text-secondary: #888;
+  --accent: #5b9cf5;
+  --warning: #f5a623;
+  --danger: #e74c3c;
+  --success: #4caf50;
+  --bar-bg: #3a3a3a;
+  --divider: #333;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--divider);
+  margin: 20px 0;
+}
+
+.metric {
+  margin-bottom: 16px;
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 2px;
+}
+
+.metric-label {
+  font-weight: 600;
+}
+
+.metric-subtitle {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.bar-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--bar-bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  background: var(--accent);
+}
+
+.bar-fill.warning { background: var(--warning); }
+.bar-fill.danger { background: var(--danger); }
+
+.bar-value {
+  font-size: 12px;
+  color: var(--text-secondary);
+  min-width: 60px;
+  text-align: right;
+}
+
+.stats-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 8px;
+}
+
+.stat {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.stat-label { color: var(--text-secondary); }
+.stat-value { color: var(--text-primary); font-weight: 500; }
+
+.footer {
+  color: var(--text-secondary);
+  font-size: 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.refresh-btn {
+  background: none;
+  border: 1px solid var(--divider);
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.refresh-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
