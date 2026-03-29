@@ -30,6 +30,8 @@ export interface UsageSummary {
   };
   weekly: {
     tokenCount: number;
+    tokenLimit: number;
+    percentage: number;
     messageCount: number;
     resetTime: Date;
   };

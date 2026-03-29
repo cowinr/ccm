@@ -45,6 +45,12 @@
           "minimum": 1000000,
           "description": "Estimated session token limit (default 175M, calibrate against Anthropic console)"
         },
+        "ccm.weeklyTokenLimit": {
+          "type": "number",
+          "default": 710000000,
+          "minimum": 1000000,
+          "description": "Estimated weekly token limit (default 710M, calibrate against Anthropic console)"
+        },
         "ccm.weeklyResetDay": {
           "type": "number",
           "default": 5,

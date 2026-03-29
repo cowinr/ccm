@@ -3,6 +3,7 @@ import { UsageEntry, UsageSummary } from './types';
 export interface AnalyserConfig {
   sessionDurationHours: number;
   sessionTokenLimit: number;
+  weeklyTokenLimit: number;
   weeklyResetDay: number;  // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
   weeklyResetHour: number; // 0-23, local time
 }
@@ -48,6 +49,8 @@ export class UsageAnalyser {
       },
       weekly: {
         tokenCount: this.sumTokens(weekEntries),
+        tokenLimit: this.config.weeklyTokenLimit,
+        percentage: Math.min((this.sumTokens(weekEntries) / this.config.weeklyTokenLimit) * 100, 100),
         messageCount: weekEntries.length,
         resetTime: weekResetTime,
       },

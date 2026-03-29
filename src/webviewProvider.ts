@@ -102,15 +102,21 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
 
     <div class="metric">
       <div class="metric-subtitle">${weeklyReset}</div>
-      <div class="stats-grid">
-        <div class="stat-block">
-          <div class="stat-number">${this.formatTokens(s.weekly.tokenCount)}</div>
-          <div class="stat-label">tokens</div>
+      <div class="bar-container">
+        <div class="bar-track">
+          <div class="bar-fill ${this.getBarClass(s.weekly.percentage)}" style="width: ${s.weekly.percentage}%"></div>
         </div>
-        <div class="stat-block">
-          <div class="stat-number">${s.weekly.messageCount}</div>
-          <div class="stat-label">messages</div>
-        </div>
+        <div class="bar-value">${Math.round(s.weekly.percentage)}% used</div>
+      </div>
+      <div class="metric-subtitle" style="margin-top:4px">
+        ${this.formatTokens(s.weekly.tokenCount)} / ${this.formatTokens(s.weekly.tokenLimit)} tokens
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-block">
+        <div class="stat-number">${s.weekly.messageCount}</div>
+        <div class="stat-label">messages</div>
       </div>
     </div>
   </div>

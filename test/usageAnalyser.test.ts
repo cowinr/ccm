@@ -21,6 +21,7 @@ describe('UsageAnalyser', () => {
     analyser = new UsageAnalyser({
       sessionDurationHours: 5,
       sessionTokenLimit: 175_000_000,
+      weeklyTokenLimit: 710_000_000,
       weeklyResetDay: 5,
       weeklyResetHour: 9,
     });
@@ -96,6 +97,7 @@ describe('UsageAnalyser', () => {
       const analyser2 = new UsageAnalyser({
         sessionDurationHours: 5,
         sessionTokenLimit: 10000,
+        weeklyTokenLimit: 710_000_000,
         weeklyResetDay: 5,
         weeklyResetHour: 9,
       });
@@ -112,6 +114,7 @@ describe('UsageAnalyser', () => {
       const analyser2 = new UsageAnalyser({
         sessionDurationHours: 5,
         sessionTokenLimit: 1000,
+        weeklyTokenLimit: 710_000_000,
         weeklyResetDay: 5,
         weeklyResetHour: 9,
       });
@@ -176,6 +179,7 @@ describe('UsageAnalyser', () => {
       analyser.updateConfig({
         sessionDurationHours: 3,
         sessionTokenLimit: 175_000_000,
+        weeklyTokenLimit: 710_000_000,
         weeklyResetDay: 5,
         weeklyResetHour: 9,
       });
