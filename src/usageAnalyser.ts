@@ -55,40 +55,41 @@ export class UsageAnalyser {
 
   /**
    * Find the start of the current fixed window.
-   * Walk backwards through entries; the window starts at the first entry
-   * after the most recent gap of >= windowMs (or the first entry if no gap).
-   * Returns null if the most recent window has already expired.
+   * Walk forward through entries assigning them to consecutive 5-hour blocks.
+   * First entry in a block sets the start (rounded down to clock hour).
+   * Any entry after the block ends starts a new block.
+   * Returns null if the most recent block has expired.
    */
   private findWindowStart(entries: UsageEntry[], now: Date, windowMs: number): Date | null {
     if (entries.length === 0) return null;
 
-    // Only consider entries that could be in an active or recently-expired window
-    // (no point scanning ancient history)
-    const relevantEntries = entries.filter(
-      e => e.timestamp.getTime() > now.getTime() - windowMs * 2
-    );
+    // Only consider recent entries (no point scanning ancient history)
+    const cutoff = now.getTime() - windowMs * 3;
+    const relevantEntries = entries.filter(e => e.timestamp.getTime() > cutoff);
     if (relevantEntries.length === 0) return null;
 
-    // Walk backwards to find the most recent gap >= windowMs
-    let windowStartIdx = 0;
-    for (let i = relevantEntries.length - 1; i > 0; i--) {
-      const gap = relevantEntries[i].timestamp.getTime() - relevantEntries[i - 1].timestamp.getTime();
-      if (gap >= windowMs) {
-        windowStartIdx = i;
-        break;
+    // Walk forward, assigning entries to consecutive fixed windows
+    let windowStart = this.roundDownToHour(relevantEntries[0].timestamp);
+    let windowEnd = new Date(windowStart.getTime() + windowMs);
+
+    for (let i = 1; i < relevantEntries.length; i++) {
+      if (relevantEntries[i].timestamp.getTime() >= windowEnd.getTime()) {
+        // This entry falls outside the current window; start a new one
+        windowStart = this.roundDownToHour(relevantEntries[i].timestamp);
+        windowEnd = new Date(windowStart.getTime() + windowMs);
       }
     }
 
-    // Window starts on the clock hour (rounded down)
-    const raw = relevantEntries[windowStartIdx].timestamp;
-    const windowStart = new Date(raw);
-    windowStart.setMinutes(0, 0, 0);
-    const windowEnd = new Date(windowStart.getTime() + windowMs);
-
-    // If the window has expired, return null
+    // Check if the last window is still active
     if (windowEnd <= now) return null;
 
     return windowStart;
+  }
+
+  private roundDownToHour(date: Date): Date {
+    const d = new Date(date);
+    d.setMinutes(0, 0, 0);
+    return d;
   }
 
   private getCurrentWeekEntries(entries: UsageEntry[], now: Date): UsageEntry[] {
