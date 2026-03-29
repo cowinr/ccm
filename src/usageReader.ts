@@ -52,11 +52,13 @@ export function readJsonlFile(filePath: string): UsageEntry[] {
   return entries;
 }
 
-export function readAllUsageEntries(dataPath?: string): UsageEntry[] {
+export function readAllUsageEntries(dataPath?: string, maxAgeDays: number = 7): UsageEntry[] {
   const basePath = dataPath || getDefaultDataPath();
   const allEntries: UsageEntry[] = [];
 
   if (!fs.existsSync(basePath)) return allEntries;
+
+  const cutoffMs = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
 
   const walkDir = (dir: string) => {
     try {
@@ -66,6 +68,13 @@ export function readAllUsageEntries(dataPath?: string): UsageEntry[] {
         if (item.isDirectory()) {
           walkDir(fullPath);
         } else if (item.name.endsWith('.jsonl')) {
+          // Skip files not modified within the lookback window
+          try {
+            const stat = fs.statSync(fullPath);
+            if (stat.mtimeMs < cutoffMs) continue;
+          } catch {
+            continue;
+          }
           allEntries.push(...readJsonlFile(fullPath));
         }
       }
