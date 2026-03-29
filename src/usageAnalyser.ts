@@ -35,6 +35,8 @@ export class UsageAnalyser {
 
     const sessionTokens = this.sumTokens(sessionEntries);
 
+    const histogram = this.buildHistogram(sessionEntries, windowStart || now, windowMs);
+
     return {
       currentSession: {
         tokenCount: sessionTokens,
@@ -42,6 +44,7 @@ export class UsageAnalyser {
         percentage: Math.min((sessionTokens / this.config.sessionTokenLimit) * 100, 100),
         messageCount: sessionEntries.length,
         resetTime: windowEnd,
+        histogram,
       },
       weekly: {
         tokenCount: this.sumTokens(weekEntries),
@@ -90,6 +93,35 @@ export class UsageAnalyser {
     if (windowEnd <= now) return null;
 
     return windowStart;
+  }
+
+  private buildHistogram(
+    entries: UsageEntry[],
+    windowStart: Date,
+    windowMs: number
+  ): { label: string; tokens: number }[] {
+    const BUCKET_MS = 15 * 60 * 1000; // 15-minute buckets
+    const bucketCount = Math.ceil(windowMs / BUCKET_MS);
+    const startMs = windowStart.getTime();
+
+    const buckets: { label: string; tokens: number }[] = [];
+    for (let i = 0; i < bucketCount; i++) {
+      const bucketStart = new Date(startMs + i * BUCKET_MS);
+      const h = bucketStart.getHours().toString().padStart(2, '0');
+      const m = bucketStart.getMinutes().toString().padStart(2, '0');
+      buckets.push({ label: `${h}:${m}`, tokens: 0 });
+    }
+
+    for (const entry of entries) {
+      const offset = entry.timestamp.getTime() - startMs;
+      const idx = Math.floor(offset / BUCKET_MS);
+      if (idx >= 0 && idx < buckets.length) {
+        buckets[idx].tokens += entry.inputTokens + entry.outputTokens +
+          entry.cacheCreationTokens + entry.cacheReadTokens;
+      }
+    }
+
+    return buckets;
   }
 
   private roundUpToHour(date: Date): Date {

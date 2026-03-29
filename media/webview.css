@@ -132,6 +132,46 @@ h3 {
   line-height: 1.2;
 }
 
+.histogram {
+  margin-top: 16px;
+}
+
+.hist-bars {
+  display: flex;
+  align-items: flex-end;
+  height: 60px;
+  gap: 1px;
+  padding-bottom: 18px;
+  position: relative;
+}
+
+.hist-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  position: relative;
+  cursor: default;
+}
+
+.hist-bar {
+  width: 100%;
+  min-height: 0;
+  background: var(--accent);
+  border-radius: 1px 1px 0 0;
+  transition: height 0.3s ease;
+}
+
+.hist-label {
+  position: absolute;
+  bottom: -16px;
+  font-size: 9px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
 .footer {
   color: var(--text-secondary);
   font-size: 11px;

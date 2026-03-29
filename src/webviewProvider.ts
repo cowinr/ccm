@@ -91,6 +91,8 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
         <div class="stat-label">tokens/min</div>
       </div>
     </div>
+
+    ${this.renderHistogram(s.currentSession.histogram)}
   </div>
 
   <hr class="divider">
@@ -126,6 +128,26 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
   </script>
 </body>
 </html>`;
+  }
+
+  private renderHistogram(buckets: { label: string; tokens: number }[]): string {
+    const maxTokens = Math.max(...buckets.map(b => b.tokens), 1);
+
+    // Show every 4th label (hourly) to avoid clutter
+    const bars = buckets.map((b, i) => {
+      const heightPct = (b.tokens / maxTokens) * 100;
+      const showLabel = i % 4 === 0;
+      const label = showLabel ? `<div class="hist-label">${b.label}</div>` : '';
+      const tooltip = `${b.label}: ${this.formatTokens(b.tokens)}`;
+      return `<div class="hist-col" title="${tooltip}">
+        <div class="hist-bar" style="height: ${heightPct}%"></div>
+        ${label}
+      </div>`;
+    }).join('');
+
+    return `<div class="histogram">
+      <div class="hist-bars">${bars}</div>
+    </div>`;
   }
 
   private getBarClass(percentage: number): string {

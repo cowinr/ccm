@@ -26,6 +26,7 @@ export interface UsageSummary {
     percentage: number;
     messageCount: number;
     resetTime: Date;
+    histogram: { label: string; tokens: number }[];
   };
   weekly: {
     tokenCount: number;
