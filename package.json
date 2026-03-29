@@ -41,7 +41,7 @@
         },
         "ccm.sessionTokenLimit": {
           "type": "number",
-          "default": 175000000,
+          "default": 221000000,
           "minimum": 1000000,
           "description": "Estimated session token limit (default 175M, calibrate against Anthropic console)"
         },
