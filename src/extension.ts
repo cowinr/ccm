@@ -66,7 +66,7 @@ export function deactivate() {
 function loadAnalyserConfig(): AnalyserConfig {
   const config = vscode.workspace.getConfiguration('ccm');
   return {
-    sessionDurationHours: config.get('sessionDurationHours', 4),
+    sessionDurationHours: config.get('sessionDurationHours', 5),
     weeklyResetDay: config.get('weeklyResetDay', 5),
     weeklyResetHour: config.get('weeklyResetHour', 9),
   };

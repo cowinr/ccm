@@ -14,16 +14,21 @@ export class UsageAnalyser {
   }
 
   analyse(entries: UsageEntry[], now: Date = new Date()): UsageSummary {
-    const sessionEntries = this.getCurrentSessionEntries(entries, now);
-    const weekEntries = this.getCurrentWeekEntries(entries, now);
+    const windowMs = this.config.sessionDurationHours * 60 * 60 * 1000;
 
-    const sessionStart = sessionEntries.length > 0
-      ? sessionEntries[0].timestamp
+    // Fixed window: find the start of the current window by looking for a gap >= windowMs
+    const windowStart = this.findWindowStart(entries, now, windowMs);
+    const windowEnd = windowStart
+      ? new Date(windowStart.getTime() + windowMs)
       : now;
-    const sessionResetTime = new Date(
-      sessionStart.getTime() + this.config.sessionDurationHours * 60 * 60 * 1000
-    );
 
+    // If window has expired, no active session
+    const windowActive = windowStart !== null && windowEnd > now;
+    const sessionEntries = windowActive
+      ? entries.filter(e => e.timestamp >= windowStart && e.timestamp <= now)
+      : [];
+
+    const weekEntries = this.getCurrentWeekEntries(entries, now);
     const weekResetTime = this.getNextWeeklyReset(now);
     const burnRate = this.calculateBurnRate(sessionEntries, now);
 
@@ -31,7 +36,7 @@ export class UsageAnalyser {
       currentSession: {
         tokenCount: this.sumTokens(sessionEntries),
         messageCount: sessionEntries.length,
-        resetTime: sessionResetTime,
+        resetTime: windowEnd,
       },
       weekly: {
         tokenCount: this.sumTokens(weekEntries),
@@ -43,34 +48,39 @@ export class UsageAnalyser {
     };
   }
 
-  private getCurrentSessionEntries(entries: UsageEntry[], now: Date): UsageEntry[] {
-    const sessionDurationMs = this.config.sessionDurationHours * 60 * 60 * 1000;
+  /**
+   * Find the start of the current fixed window.
+   * Walk backwards through entries; the window starts at the first entry
+   * after the most recent gap of >= windowMs (or the first entry if no gap).
+   * Returns null if the most recent window has already expired.
+   */
+  private findWindowStart(entries: UsageEntry[], now: Date, windowMs: number): Date | null {
+    if (entries.length === 0) return null;
 
-    const bySession = new Map<string, UsageEntry[]>();
-    for (const entry of entries) {
-      const existing = bySession.get(entry.sessionId) || [];
-      existing.push(entry);
-      bySession.set(entry.sessionId, existing);
-    }
+    // Only consider entries that could be in an active or recently-expired window
+    // (no point scanning ancient history)
+    const relevantEntries = entries.filter(
+      e => e.timestamp.getTime() > now.getTime() - windowMs * 2
+    );
+    if (relevantEntries.length === 0) return null;
 
-    let latestSession: UsageEntry[] = [];
-    let latestTime = 0;
-    for (const [, sessionEntries] of bySession) {
-      const maxTime = Math.max(...sessionEntries.map(e => e.timestamp.getTime()));
-      if (maxTime > latestTime) {
-        latestTime = maxTime;
-        latestSession = sessionEntries;
+    // Walk backwards to find the most recent gap >= windowMs
+    let windowStartIdx = 0;
+    for (let i = relevantEntries.length - 1; i > 0; i--) {
+      const gap = relevantEntries[i].timestamp.getTime() - relevantEntries[i - 1].timestamp.getTime();
+      if (gap >= windowMs) {
+        windowStartIdx = i;
+        break;
       }
     }
 
-    if (latestSession.length === 0) return [];
+    const windowStart = relevantEntries[windowStartIdx].timestamp;
+    const windowEnd = new Date(windowStart.getTime() + windowMs);
 
-    const sessionStart = latestSession[0].timestamp;
-    const sessionEnd = new Date(sessionStart.getTime() + sessionDurationMs);
+    // If the window has expired, return null
+    if (windowEnd <= now) return null;
 
-    if (now > sessionEnd) return [];
-
-    return latestSession;
+    return windowStart;
   }
 
   private getCurrentWeekEntries(entries: UsageEntry[], now: Date): UsageEntry[] {
