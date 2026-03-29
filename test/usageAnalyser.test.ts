@@ -27,16 +27,17 @@ describe('UsageAnalyser', () => {
   });
 
   describe('fixed 5-hour window', () => {
-    it('includes all entries within the window', () => {
+    it('includes all entries within the window (no gaps)', () => {
       const now = new Date('2026-03-29T14:00:00Z');
       const entries: UsageEntry[] = [
         makeEntry({ timestamp: new Date('2026-03-29T12:00:00Z') }),
+        makeEntry({ timestamp: new Date('2026-03-29T12:30:00Z') }),
         makeEntry({ timestamp: new Date('2026-03-29T13:00:00Z') }),
       ];
 
       const summary = analyser.analyse(entries, now);
-      expect(summary.currentSession.messageCount).toBe(2);
-      expect(summary.currentSession.tokenCount).toBe(3000);
+      expect(summary.currentSession.messageCount).toBe(3);
+      expect(summary.currentSession.tokenCount).toBe(4500);
     });
 
     it('reset time = window start + 5 hours', () => {
@@ -46,7 +47,6 @@ describe('UsageAnalyser', () => {
       ];
 
       const summary = analyser.analyse(entries, now);
-      // Window starts at 12:00, reset at 17:00
       expect(summary.currentSession.resetTime.getUTCHours()).toBe(17);
     });
 
@@ -61,15 +61,34 @@ describe('UsageAnalyser', () => {
       expect(summary.currentSession.tokenCount).toBe(0);
     });
 
+    it('uses largest recent gap (>1h) as window boundary', () => {
+      const now = new Date('2026-03-29T20:30:00Z');
+      const entries: UsageEntry[] = [
+        // Old window activity
+        makeEntry({ timestamp: new Date('2026-03-29T14:00:00Z') }),
+        makeEntry({ timestamp: new Date('2026-03-29T14:30:00Z') }),
+        // 4 hour gap (biggest gap = window boundary)
+        // New window activity
+        makeEntry({ timestamp: new Date('2026-03-29T18:30:00Z') }),
+        makeEntry({ timestamp: new Date('2026-03-29T19:00:00Z') }),
+        makeEntry({ timestamp: new Date('2026-03-29T20:00:00Z') }),
+      ];
+
+      const summary = analyser.analyse(entries, now);
+      // Only entries after the gap
+      expect(summary.currentSession.messageCount).toBe(3);
+      // Window starts at 18:00 (rounded down), reset at 23:00
+      expect(summary.currentSession.resetTime.getUTCHours()).toBe(23);
+    });
+
     it('includes entries from multiple sessions in same window', () => {
       const now = new Date('2026-03-29T14:00:00Z');
       const entries: UsageEntry[] = [
         makeEntry({ timestamp: new Date('2026-03-29T12:00:00Z'), sessionId: 'session-a' }),
-        makeEntry({ timestamp: new Date('2026-03-29T13:00:00Z'), sessionId: 'session-b' }),
+        makeEntry({ timestamp: new Date('2026-03-29T12:30:00Z'), sessionId: 'session-b' }),
       ];
 
       const summary = analyser.analyse(entries, now);
-      // Both sessions count - it's a time window, not per-session
       expect(summary.currentSession.messageCount).toBe(2);
     });
 
@@ -86,7 +105,6 @@ describe('UsageAnalyser', () => {
       ];
 
       const summary = analyser2.analyse(entries, now);
-      // 3000 / 10000 = 30%
       expect(summary.currentSession.percentage).toBe(30);
     });
 
@@ -104,24 +122,6 @@ describe('UsageAnalyser', () => {
 
       const summary = analyser2.analyse(entries, now);
       expect(summary.currentSession.percentage).toBe(100);
-    });
-
-    it('starts a new window after a 5+ hour gap', () => {
-      const now = new Date('2026-03-29T20:00:00Z');
-      const entries: UsageEntry[] = [
-        // Old window (expired)
-        makeEntry({ timestamp: new Date('2026-03-29T08:00:00Z') }),
-        // Gap of 10 hours
-        // New window
-        makeEntry({ timestamp: new Date('2026-03-29T18:00:00Z') }),
-        makeEntry({ timestamp: new Date('2026-03-29T19:00:00Z') }),
-      ];
-
-      const summary = analyser.analyse(entries, now);
-      // Only the new window entries
-      expect(summary.currentSession.messageCount).toBe(2);
-      // Reset = 18:00 + 5h = 23:00
-      expect(summary.currentSession.resetTime.getUTCHours()).toBe(23);
     });
   });
 
@@ -186,7 +186,6 @@ describe('UsageAnalyser', () => {
       ];
 
       const summary = analyser.analyse(entries, now);
-      // 3h window: start 12:00, reset 15:00
       expect(summary.currentSession.resetTime.getUTCHours()).toBe(15);
     });
   });

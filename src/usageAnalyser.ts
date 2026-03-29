@@ -55,32 +55,38 @@ export class UsageAnalyser {
 
   /**
    * Find the start of the current fixed window.
-   * Walk forward through entries assigning them to consecutive 5-hour blocks.
-   * First entry in a block sets the start (rounded down to clock hour).
-   * Any entry after the block ends starts a new block.
-   * Returns null if the most recent block has expired.
+   * Since Anthropic's window boundaries are server-side and can't be
+   * perfectly detected from local data, we use the largest gap (> 1 hour)
+   * walking backwards from the latest entry as a proxy for "session resumed
+   * after previous window expired". Falls back to the first entry if no
+   * significant gap is found.
    */
   private findWindowStart(entries: UsageEntry[], now: Date, windowMs: number): Date | null {
     if (entries.length === 0) return null;
 
-    // Only consider recent entries (no point scanning ancient history)
-    const cutoff = now.getTime() - windowMs * 3;
+    // Only consider entries within the last 2 windows
+    const cutoff = now.getTime() - windowMs * 2;
     const relevantEntries = entries.filter(e => e.timestamp.getTime() > cutoff);
     if (relevantEntries.length === 0) return null;
 
-    // Walk forward, assigning entries to consecutive fixed windows
-    let windowStart = this.roundDownToHour(relevantEntries[0].timestamp);
-    let windowEnd = new Date(windowStart.getTime() + windowMs);
+    // Walk backwards looking for the largest gap (proxy for window boundary)
+    // Only consider gaps > 1 hour as meaningful session breaks
+    const MIN_GAP_MS = 60 * 60 * 1000; // 1 hour
+    let bestGapIdx = 0;
+    let bestGapMs = 0;
 
-    for (let i = 1; i < relevantEntries.length; i++) {
-      if (relevantEntries[i].timestamp.getTime() >= windowEnd.getTime()) {
-        // This entry falls outside the current window; start a new one
-        windowStart = this.roundDownToHour(relevantEntries[i].timestamp);
-        windowEnd = new Date(windowStart.getTime() + windowMs);
+    for (let i = relevantEntries.length - 1; i > 0; i--) {
+      const gap = relevantEntries[i].timestamp.getTime() - relevantEntries[i - 1].timestamp.getTime();
+      if (gap > MIN_GAP_MS && gap > bestGapMs) {
+        bestGapMs = gap;
+        bestGapIdx = i;
+        break; // Take the most recent significant gap
       }
     }
 
-    // Check if the last window is still active
+    const windowStart = this.roundDownToHour(relevantEntries[bestGapIdx].timestamp);
+    const windowEnd = new Date(windowStart.getTime() + windowMs);
+
     if (windowEnd <= now) return null;
 
     return windowStart;
