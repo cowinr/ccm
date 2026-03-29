@@ -74,7 +74,10 @@ export class UsageAnalyser {
       }
     }
 
-    const windowStart = relevantEntries[windowStartIdx].timestamp;
+    // Window starts on the clock hour (rounded down)
+    const raw = relevantEntries[windowStartIdx].timestamp;
+    const windowStart = new Date(raw);
+    windowStart.setMinutes(0, 0, 0);
     const windowEnd = new Date(windowStart.getTime() + windowMs);
 
     // If the window has expired, return null
