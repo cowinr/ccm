@@ -1,10 +1,7 @@
 import { UsageEntry, UsageSummary } from './types';
-import { calculateEntryCost } from './pricing';
 
 export interface AnalyserConfig {
   sessionDurationHours: number;
-  weeklyLimitUsd: number;
-  sessionLimitUsd: number;
   weeklyResetDay: number;  // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
   weeklyResetHour: number; // 0-23, local time
 }
@@ -20,9 +17,6 @@ export class UsageAnalyser {
     const sessionEntries = this.getCurrentSessionEntries(entries, now);
     const weekEntries = this.getCurrentWeekEntries(entries, now);
 
-    const sessionCost = this.sumCosts(sessionEntries);
-    const weeklyCost = this.sumCosts(weekEntries);
-
     const sessionStart = sessionEntries.length > 0
       ? sessionEntries[0].timestamp
       : now;
@@ -35,19 +29,14 @@ export class UsageAnalyser {
 
     return {
       currentSession: {
-        costUsd: sessionCost,
-        limitUsd: this.config.sessionLimitUsd,
-        percentage: Math.min((sessionCost / this.config.sessionLimitUsd) * 100, 100),
-        resetTime: sessionResetTime,
         tokenCount: this.sumTokens(sessionEntries),
         messageCount: sessionEntries.length,
+        resetTime: sessionResetTime,
       },
       weekly: {
-        costUsd: weeklyCost,
-        limitUsd: this.config.weeklyLimitUsd,
-        percentage: Math.min((weeklyCost / this.config.weeklyLimitUsd) * 100, 100),
-        resetTime: weekResetTime,
+        tokenCount: this.sumTokens(weekEntries),
         messageCount: weekEntries.length,
+        resetTime: weekResetTime,
       },
       burnRate,
       lastUpdated: now,
@@ -57,7 +46,6 @@ export class UsageAnalyser {
   private getCurrentSessionEntries(entries: UsageEntry[], now: Date): UsageEntry[] {
     const sessionDurationMs = this.config.sessionDurationHours * 60 * 60 * 1000;
 
-    // Group by sessionId, find the latest session
     const bySession = new Map<string, UsageEntry[]>();
     for (const entry of entries) {
       const existing = bySession.get(entry.sessionId) || [];
@@ -65,7 +53,6 @@ export class UsageAnalyser {
       bySession.set(entry.sessionId, existing);
     }
 
-    // Find session with the most recent entry
     let latestSession: UsageEntry[] = [];
     let latestTime = 0;
     for (const [, sessionEntries] of bySession) {
@@ -78,7 +65,6 @@ export class UsageAnalyser {
 
     if (latestSession.length === 0) return [];
 
-    // Check if this session is still "active"
     const sessionStart = latestSession[0].timestamp;
     const sessionEnd = new Date(sessionStart.getTime() + sessionDurationMs);
 
@@ -94,7 +80,7 @@ export class UsageAnalyser {
 
   private getWeekStart(date: Date): Date {
     const d = new Date(date);
-    const currentDay = d.getDay(); // 0=Sun..6=Sat, local time
+    const currentDay = d.getDay();
     const resetDay = this.config.weeklyResetDay;
 
     let daysSinceReset = currentDay - resetDay;
@@ -115,10 +101,6 @@ export class UsageAnalyser {
     return new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
   }
 
-  private sumCosts(entries: UsageEntry[]): number {
-    return entries.reduce((sum, e) => sum + calculateEntryCost(e), 0);
-  }
-
   private sumTokens(entries: UsageEntry[]): number {
     return entries.reduce(
       (sum, e) => sum + e.inputTokens + e.outputTokens + e.cacheCreationTokens + e.cacheReadTokens,
@@ -129,20 +111,16 @@ export class UsageAnalyser {
   private calculateBurnRate(
     entries: UsageEntry[],
     now: Date
-  ): { tokensPerMin: number; costPerMin: number } {
-    if (entries.length === 0) return { tokensPerMin: 0, costPerMin: 0 };
+  ): { tokensPerMin: number } {
+    if (entries.length === 0) return { tokensPerMin: 0 };
 
     const firstTime = entries[0].timestamp.getTime();
     const elapsedMin = (now.getTime() - firstTime) / 60000;
 
-    if (elapsedMin < 1) return { tokensPerMin: 0, costPerMin: 0 };
-
-    const totalTokens = this.sumTokens(entries);
-    const totalCost = this.sumCosts(entries);
+    if (elapsedMin < 1) return { tokensPerMin: 0 };
 
     return {
-      tokensPerMin: totalTokens / elapsedMin,
-      costPerMin: totalCost / elapsedMin,
+      tokensPerMin: this.sumTokens(entries) / elapsedMin,
     };
   }
 }

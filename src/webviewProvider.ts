@@ -54,8 +54,6 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
 <body><p style="color:var(--text-secondary)">Loading usage data...</p></body></html>`;
     }
 
-    const sessionBarClass = this.getBarClass(s.currentSession.percentage);
-    const weeklyBarClass = this.getBarClass(s.weekly.percentage);
     const sessionReset = this.formatTimeRemaining(s.currentSession.resetTime);
     const weeklyReset = this.formatResetTime(s.weekly.resetTime);
 
@@ -66,35 +64,23 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
 </head>
 <body>
   <div class="section">
-    <h2>Plan Usage Limits</h2>
+    <h2>Session Usage</h2>
 
     <div class="metric">
-      <h3>Current session</h3>
       <div class="metric-subtitle">Resets in ${sessionReset}</div>
-      <div class="bar-container">
-        <div class="bar-track">
-          <div class="bar-fill ${sessionBarClass}" style="width: ${s.currentSession.percentage}%"></div>
+      <div class="stats-grid">
+        <div class="stat-block">
+          <div class="stat-number">${this.formatTokens(s.currentSession.tokenCount)}</div>
+          <div class="stat-label">tokens</div>
         </div>
-        <div class="bar-value">${Math.round(s.currentSession.percentage)}% used</div>
-      </div>
-      <div class="metric-subtitle" style="margin-top:4px">
-        $${s.currentSession.costUsd.toFixed(2)} / $${s.currentSession.limitUsd.toFixed(2)}
-      </div>
-    </div>
-
-    <hr class="divider">
-
-    <div class="metric">
-      <h3>Weekly limits</h3>
-      <div class="metric-subtitle">${weeklyReset}</div>
-      <div class="bar-container">
-        <div class="bar-track">
-          <div class="bar-fill ${weeklyBarClass}" style="width: ${s.weekly.percentage}%"></div>
+        <div class="stat-block">
+          <div class="stat-number">${s.currentSession.messageCount}</div>
+          <div class="stat-label">messages</div>
         </div>
-        <div class="bar-value">${Math.round(s.weekly.percentage)}% used</div>
-      </div>
-      <div class="metric-subtitle" style="margin-top:4px">
-        $${s.weekly.costUsd.toFixed(2)} / $${s.weekly.limitUsd.toFixed(2)}
+        <div class="stat-block">
+          <div class="stat-number">${this.formatTokens(Math.round(s.burnRate.tokensPerMin))}</div>
+          <div class="stat-label">tokens/min</div>
+        </div>
       </div>
     </div>
   </div>
@@ -102,22 +88,19 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
   <hr class="divider">
 
   <div class="section">
-    <div class="stats-row">
-      <div class="stat">
-        <span class="stat-label">Burn Rate:</span>
-        <span class="stat-value">${s.burnRate.tokensPerMin.toFixed(1)} tokens/min</span>
-      </div>
-    </div>
-    <div class="stats-row">
-      <div class="stat">
-        <span class="stat-label">Cost Rate:</span>
-        <span class="stat-value">$${s.burnRate.costPerMin.toFixed(4)}/min</span>
-      </div>
-    </div>
-    <div class="stats-row">
-      <div class="stat">
-        <span class="stat-label">Messages:</span>
-        <span class="stat-value">${s.currentSession.messageCount} (session) / ${s.weekly.messageCount} (week)</span>
+    <h2>Weekly Usage</h2>
+
+    <div class="metric">
+      <div class="metric-subtitle">${weeklyReset}</div>
+      <div class="stats-grid">
+        <div class="stat-block">
+          <div class="stat-number">${this.formatTokens(s.weekly.tokenCount)}</div>
+          <div class="stat-label">tokens</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-number">${s.weekly.messageCount}</div>
+          <div class="stat-label">messages</div>
+        </div>
       </div>
     </div>
   </div>
@@ -137,10 +120,10 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
 </html>`;
   }
 
-  private getBarClass(percentage: number): string {
-    if (percentage >= 85) return 'danger';
-    if (percentage >= 60) return 'warning';
-    return '';
+  private formatTokens(count: number): string {
+    if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
+    if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`;
+    return count.toString();
   }
 
   private formatTimeRemaining(resetTime: Date): string {

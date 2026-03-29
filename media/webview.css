@@ -108,8 +108,29 @@ h3 {
   font-size: 12px;
 }
 
-.stat-label { color: var(--text-secondary); }
+.stat-label { color: var(--text-secondary); font-size: 11px; }
 .stat-value { color: var(--text-primary); font-weight: 500; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.stat-block {
+  text-align: center;
+  padding: 10px 6px;
+  background: var(--surface);
+  border-radius: 6px;
+}
+
+.stat-number {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.2;
+}
 
 .footer {
   color: var(--text-secondary);

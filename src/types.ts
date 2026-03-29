@@ -21,23 +21,17 @@ export interface SessionBlock {
 
 export interface UsageSummary {
   currentSession: {
-    costUsd: number;
-    limitUsd: number;
-    percentage: number;
-    resetTime: Date;
     tokenCount: number;
     messageCount: number;
+    resetTime: Date;
   };
   weekly: {
-    costUsd: number;
-    limitUsd: number;
-    percentage: number;
-    resetTime: Date;
+    tokenCount: number;
     messageCount: number;
+    resetTime: Date;
   };
   burnRate: {
     tokensPerMin: number;
-    costPerMin: number;
   };
   lastUpdated: Date;
 }

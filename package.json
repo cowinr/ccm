@@ -1,7 +1,7 @@
 {
   "name": "claude-code-monitor",
   "displayName": "Claude Code Monitor",
-  "description": "Monitor Claude Code usage limits with visual progress bars",
+  "description": "Monitor Claude Code token and message usage in the sidebar",
   "publisher": "cowinr",
   "version": "0.1.0",
   "engines": { "vscode": "^1.80.0" },
@@ -39,12 +39,6 @@
           "minimum": 1,
           "description": "Estimated session duration for reset calculation (hours)"
         },
-        "ccm.weeklyLimitUsd": {
-          "type": "number",
-          "default": 1000,
-          "minimum": 1,
-          "description": "Estimated weekly spending limit in API-equivalent USD"
-        },
         "ccm.weeklyResetDay": {
           "type": "number",
           "default": 5,
@@ -58,18 +52,6 @@
           "minimum": 0,
           "maximum": 23,
           "description": "Hour of day for weekly reset (local time, 0-23)"
-        },
-        "ccm.sessionLimitUsd": {
-          "type": "number",
-          "default": 72.28,
-          "minimum": 1,
-          "description": "Estimated session spending limit (USD)"
-        },
-        "ccm.plan": {
-          "type": "string",
-          "default": "max5",
-          "enum": ["pro", "max5", "max20"],
-          "description": "Your Anthropic plan (affects default limits)"
         },
         "ccm.dataPath": {
           "type": "string",

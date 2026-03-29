@@ -67,8 +67,6 @@ function loadAnalyserConfig(): AnalyserConfig {
   const config = vscode.workspace.getConfiguration('ccm');
   return {
     sessionDurationHours: config.get('sessionDurationHours', 5),
-    weeklyLimitUsd: config.get('weeklyLimitUsd', 1000),
-    sessionLimitUsd: config.get('sessionLimitUsd', 72.28),
     weeklyResetDay: config.get('weeklyResetDay', 5),
     weeklyResetHour: config.get('weeklyResetHour', 9),
   };
@@ -89,25 +87,21 @@ function refreshUsage() {
     panelProvider.update(summary);
 
     // Update status bar
-    const sessionPct = Math.round(summary.currentSession.percentage);
-    const weeklyPct = Math.round(summary.weekly.percentage);
-    const icon = sessionPct >= 85 ? '$(warning)' : '$(pulse)';
-    statusBarItem.text = `${icon} S:${sessionPct}% W:${weeklyPct}%`;
-    statusBarItem.tooltip = `Session: $${summary.currentSession.costUsd.toFixed(2)} / $${summary.currentSession.limitUsd.toFixed(2)}\nWeekly: $${summary.weekly.costUsd.toFixed(2)} / $${summary.weekly.limitUsd.toFixed(2)}\nBurn: ${summary.burnRate.tokensPerMin.toFixed(0)} tok/min`;
-
-    // Colour coding
-    const maxPct = Math.max(sessionPct, weeklyPct);
-    if (maxPct >= 85) {
-      statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
-    } else if (maxPct >= 60) {
-      statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
-    } else {
-      statusBarItem.backgroundColor = undefined;
-    }
+    const sessionTok = formatTokensCompact(summary.currentSession.tokenCount);
+    const weekTok = formatTokensCompact(summary.weekly.tokenCount);
+    statusBarItem.text = `$(pulse) ${sessionTok} | W: ${weekTok}`;
+    statusBarItem.tooltip = `Session: ${sessionTok} tokens, ${summary.currentSession.messageCount} msgs\nWeekly: ${weekTok} tokens, ${summary.weekly.messageCount} msgs\nBurn: ${Math.round(summary.burnRate.tokensPerMin)} tok/min`;
+    statusBarItem.backgroundColor = undefined;
   } catch (error) {
     console.error('CCM refresh error:', error);
     statusBarItem.text = '$(pulse) CCM: Error';
   }
+}
+
+function formatTokensCompact(count: number): string {
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`;
+  return count.toString();
 }
 
 function startRefreshTimer() {
