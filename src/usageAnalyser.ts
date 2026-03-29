@@ -84,7 +84,7 @@ export class UsageAnalyser {
       }
     }
 
-    const windowStart = this.roundDownToHour(relevantEntries[bestGapIdx].timestamp);
+    const windowStart = this.roundUpToHour(relevantEntries[bestGapIdx].timestamp);
     const windowEnd = new Date(windowStart.getTime() + windowMs);
 
     if (windowEnd <= now) return null;
@@ -92,9 +92,13 @@ export class UsageAnalyser {
     return windowStart;
   }
 
-  private roundDownToHour(date: Date): Date {
+  private roundUpToHour(date: Date): Date {
     const d = new Date(date);
+    if (d.getMinutes() === 0 && d.getSeconds() === 0 && d.getMilliseconds() === 0) {
+      return d; // Already on the hour
+    }
     d.setMinutes(0, 0, 0);
+    d.setHours(d.getHours() + 1);
     return d;
   }
 

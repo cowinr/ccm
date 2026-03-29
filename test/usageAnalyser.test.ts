@@ -75,10 +75,10 @@ describe('UsageAnalyser', () => {
       ];
 
       const summary = analyser.analyse(entries, now);
-      // Only entries after the gap
-      expect(summary.currentSession.messageCount).toBe(3);
-      // Window starts at 18:00 (rounded down), reset at 23:00
-      expect(summary.currentSession.resetTime.getUTCHours()).toBe(23);
+      // 18:30 entry is before window start (19:00), so only 19:00 and 20:00 count
+      expect(summary.currentSession.messageCount).toBe(2);
+      // Window starts at 19:00 (rounded up from 18:30), reset at 00:00
+      expect(summary.currentSession.resetTime.getUTCHours()).toBe(0);
     });
 
     it('includes entries from multiple sessions in same window', () => {
