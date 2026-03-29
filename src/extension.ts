@@ -87,17 +87,20 @@ function refreshUsage() {
     // Update webview
     panelProvider.update(summary);
 
-    // Update status bar
-    const pct = Math.round(summary.currentSession.percentage);
+    // Update status bar with mini progress bars
+    const sPct = Math.round(summary.currentSession.percentage);
+    const wPct = 0; // No weekly limit calibrated yet
+    const sBar = miniBar(sPct);
+    const wBar = miniBar(wPct);
     const sessionTok = formatTokensCompact(summary.currentSession.tokenCount);
     const weekTok = formatTokensCompact(summary.weekly.tokenCount);
-    const icon = pct >= 85 ? '$(warning)' : '$(pulse)';
-    statusBarItem.text = `${icon} ${pct}% | W: ${weekTok}`;
-    statusBarItem.tooltip = `Session: ${pct}% (${sessionTok} / ${formatTokensCompact(summary.currentSession.tokenLimit)})\n${summary.currentSession.messageCount} msgs, ${Math.round(summary.burnRate.tokensPerMin)} tok/min\nWeekly: ${weekTok} tokens, ${summary.weekly.messageCount} msgs`;
 
-    if (pct >= 85) {
+    statusBarItem.text = `S ${sBar} ${sPct}%  W ${wBar} ${weekTok}`;
+    statusBarItem.tooltip = `Session: ${sPct}% (${sessionTok} / ${formatTokensCompact(summary.currentSession.tokenLimit)})\n${summary.currentSession.messageCount} msgs, ${Math.round(summary.burnRate.tokensPerMin)} tok/min\nWeekly: ${weekTok} tokens, ${summary.weekly.messageCount} msgs`;
+
+    if (sPct >= 85) {
       statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
-    } else if (pct >= 60) {
+    } else if (sPct >= 60) {
       statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
     } else {
       statusBarItem.backgroundColor = undefined;
@@ -106,6 +109,11 @@ function refreshUsage() {
     console.error('CCM refresh error:', error);
     statusBarItem.text = '$(pulse) CCM: Error';
   }
+}
+
+function miniBar(pct: number, width: number = 8): string {
+  const filled = Math.round((pct / 100) * width);
+  return '▓'.repeat(filled) + '░'.repeat(width - filled);
 }
 
 function formatTokensCompact(count: number): string {
