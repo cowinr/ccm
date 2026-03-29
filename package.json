@@ -35,7 +35,7 @@
         },
         "ccm.sessionDurationHours": {
           "type": "number",
-          "default": 5,
+          "default": 4,
           "minimum": 1,
           "description": "Estimated session duration for reset calculation (hours)"
         },
