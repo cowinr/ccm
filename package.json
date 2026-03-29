@@ -39,6 +39,12 @@
           "minimum": 1,
           "description": "Estimated session duration for reset calculation (hours)"
         },
+        "ccm.sessionTokenLimit": {
+          "type": "number",
+          "default": 175000000,
+          "minimum": 1000000,
+          "description": "Estimated session token limit (default 175M, calibrate against Anthropic console)"
+        },
         "ccm.weeklyResetDay": {
           "type": "number",
           "default": 5,

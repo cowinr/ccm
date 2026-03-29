@@ -56,6 +56,8 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
 
     const sessionReset = this.formatTimeRemaining(s.currentSession.resetTime);
     const weeklyReset = this.formatResetTime(s.weekly.resetTime);
+    const pct = Math.round(s.currentSession.percentage);
+    const barClass = this.getBarClass(s.currentSession.percentage);
 
     return `<!DOCTYPE html>
 <html>
@@ -64,23 +66,29 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
 </head>
 <body>
   <div class="section">
-    <h2>Session Usage</h2>
+    <h2>Current session</h2>
 
     <div class="metric">
       <div class="metric-subtitle">Resets in ${sessionReset}</div>
-      <div class="stats-grid">
-        <div class="stat-block">
-          <div class="stat-number">${this.formatTokens(s.currentSession.tokenCount)}</div>
-          <div class="stat-label">tokens</div>
+      <div class="bar-container">
+        <div class="bar-track">
+          <div class="bar-fill ${barClass}" style="width: ${s.currentSession.percentage}%"></div>
         </div>
-        <div class="stat-block">
-          <div class="stat-number">${s.currentSession.messageCount}</div>
-          <div class="stat-label">messages</div>
-        </div>
-        <div class="stat-block">
-          <div class="stat-number">${this.formatTokens(Math.round(s.burnRate.tokensPerMin))}</div>
-          <div class="stat-label">tokens/min</div>
-        </div>
+        <div class="bar-value">${pct}% used</div>
+      </div>
+      <div class="metric-subtitle" style="margin-top:4px">
+        ${this.formatTokens(s.currentSession.tokenCount)} / ${this.formatTokens(s.currentSession.tokenLimit)} tokens
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-block">
+        <div class="stat-number">${s.currentSession.messageCount}</div>
+        <div class="stat-label">messages</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-number">${this.formatTokens(Math.round(s.burnRate.tokensPerMin))}</div>
+        <div class="stat-label">tokens/min</div>
       </div>
     </div>
   </div>
@@ -88,7 +96,7 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
   <hr class="divider">
 
   <div class="section">
-    <h2>Weekly Usage</h2>
+    <h2>Weekly usage</h2>
 
     <div class="metric">
       <div class="metric-subtitle">${weeklyReset}</div>
@@ -118,6 +126,12 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
   </script>
 </body>
 </html>`;
+  }
+
+  private getBarClass(percentage: number): string {
+    if (percentage >= 85) return 'danger';
+    if (percentage >= 60) return 'warning';
+    return '';
   }
 
   private formatTokens(count: number): string {

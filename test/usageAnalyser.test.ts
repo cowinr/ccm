@@ -20,6 +20,7 @@ describe('UsageAnalyser', () => {
   beforeEach(() => {
     analyser = new UsageAnalyser({
       sessionDurationHours: 5,
+      sessionTokenLimit: 175_000_000,
       weeklyResetDay: 5,
       weeklyResetHour: 9,
     });
@@ -70,6 +71,39 @@ describe('UsageAnalyser', () => {
       const summary = analyser.analyse(entries, now);
       // Both sessions count - it's a time window, not per-session
       expect(summary.currentSession.messageCount).toBe(2);
+    });
+
+    it('calculates percentage against token limit', () => {
+      const analyser2 = new UsageAnalyser({
+        sessionDurationHours: 5,
+        sessionTokenLimit: 10000,
+        weeklyResetDay: 5,
+        weeklyResetHour: 9,
+      });
+      const now = new Date('2026-03-29T14:00:00Z');
+      const entries: UsageEntry[] = [
+        makeEntry({ timestamp: new Date('2026-03-29T12:00:00Z'), inputTokens: 2000, outputTokens: 1000 }),
+      ];
+
+      const summary = analyser2.analyse(entries, now);
+      // 3000 / 10000 = 30%
+      expect(summary.currentSession.percentage).toBe(30);
+    });
+
+    it('caps percentage at 100', () => {
+      const analyser2 = new UsageAnalyser({
+        sessionDurationHours: 5,
+        sessionTokenLimit: 1000,
+        weeklyResetDay: 5,
+        weeklyResetHour: 9,
+      });
+      const now = new Date('2026-03-29T14:00:00Z');
+      const entries: UsageEntry[] = [
+        makeEntry({ timestamp: new Date('2026-03-29T12:00:00Z'), inputTokens: 2000, outputTokens: 1000 }),
+      ];
+
+      const summary = analyser2.analyse(entries, now);
+      expect(summary.currentSession.percentage).toBe(100);
     });
 
     it('starts a new window after a 5+ hour gap', () => {
@@ -141,6 +175,7 @@ describe('UsageAnalyser', () => {
     it('updates window duration', () => {
       analyser.updateConfig({
         sessionDurationHours: 3,
+        sessionTokenLimit: 175_000_000,
         weeklyResetDay: 5,
         weeklyResetHour: 9,
       });

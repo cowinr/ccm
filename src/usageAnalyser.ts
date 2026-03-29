@@ -2,6 +2,7 @@ import { UsageEntry, UsageSummary } from './types';
 
 export interface AnalyserConfig {
   sessionDurationHours: number;
+  sessionTokenLimit: number;
   weeklyResetDay: number;  // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
   weeklyResetHour: number; // 0-23, local time
 }
@@ -32,9 +33,13 @@ export class UsageAnalyser {
     const weekResetTime = this.getNextWeeklyReset(now);
     const burnRate = this.calculateBurnRate(sessionEntries, now);
 
+    const sessionTokens = this.sumTokens(sessionEntries);
+
     return {
       currentSession: {
-        tokenCount: this.sumTokens(sessionEntries),
+        tokenCount: sessionTokens,
+        tokenLimit: this.config.sessionTokenLimit,
+        percentage: Math.min((sessionTokens / this.config.sessionTokenLimit) * 100, 100),
         messageCount: sessionEntries.length,
         resetTime: windowEnd,
       },

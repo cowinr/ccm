@@ -22,6 +22,8 @@ export interface SessionBlock {
 export interface UsageSummary {
   currentSession: {
     tokenCount: number;
+    tokenLimit: number;
+    percentage: number;
     messageCount: number;
     resetTime: Date;
   };

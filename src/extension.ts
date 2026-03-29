@@ -67,6 +67,7 @@ function loadAnalyserConfig(): AnalyserConfig {
   const config = vscode.workspace.getConfiguration('ccm');
   return {
     sessionDurationHours: config.get('sessionDurationHours', 5),
+    sessionTokenLimit: config.get('sessionTokenLimit', 175_000_000),
     weeklyResetDay: config.get('weeklyResetDay', 5),
     weeklyResetHour: config.get('weeklyResetHour', 9),
   };
@@ -87,11 +88,20 @@ function refreshUsage() {
     panelProvider.update(summary);
 
     // Update status bar
+    const pct = Math.round(summary.currentSession.percentage);
     const sessionTok = formatTokensCompact(summary.currentSession.tokenCount);
     const weekTok = formatTokensCompact(summary.weekly.tokenCount);
-    statusBarItem.text = `$(pulse) ${sessionTok} | W: ${weekTok}`;
-    statusBarItem.tooltip = `Session: ${sessionTok} tokens, ${summary.currentSession.messageCount} msgs\nWeekly: ${weekTok} tokens, ${summary.weekly.messageCount} msgs\nBurn: ${Math.round(summary.burnRate.tokensPerMin)} tok/min`;
-    statusBarItem.backgroundColor = undefined;
+    const icon = pct >= 85 ? '$(warning)' : '$(pulse)';
+    statusBarItem.text = `${icon} ${pct}% | W: ${weekTok}`;
+    statusBarItem.tooltip = `Session: ${pct}% (${sessionTok} / ${formatTokensCompact(summary.currentSession.tokenLimit)})\n${summary.currentSession.messageCount} msgs, ${Math.round(summary.burnRate.tokensPerMin)} tok/min\nWeekly: ${weekTok} tokens, ${summary.weekly.messageCount} msgs`;
+
+    if (pct >= 85) {
+      statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+    } else if (pct >= 60) {
+      statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+    } else {
+      statusBarItem.backgroundColor = undefined;
+    }
   } catch (error) {
     console.error('CCM refresh error:', error);
     statusBarItem.text = '$(pulse) CCM: Error';
