@@ -1,4 +1,5 @@
 import { UsageEntry, UsageSummary } from './types';
+import { HookStatus } from './statusReader';
 
 export interface AnalyserConfig {
   sessionDurationHours: number;
@@ -15,7 +16,7 @@ export class UsageAnalyser {
     this.config = config;
   }
 
-  analyse(entries: UsageEntry[], now: Date = new Date()): UsageSummary {
+  analyse(entries: UsageEntry[], now: Date = new Date(), hookStatus?: HookStatus | null): UsageSummary {
     const windowMs = this.config.sessionDurationHours * 60 * 60 * 1000;
 
     // Fixed window: find the start of the current window by looking for a gap >= windowMs
@@ -35,24 +36,62 @@ export class UsageAnalyser {
     const burnRate = this.calculateBurnRate(sessionEntries, now);
 
     const sessionTokens = this.sumTokens(sessionEntries);
+    const weeklyTokens = this.sumTokens(weekEntries);
 
     const histogram = this.buildHistogram(sessionEntries, windowStart || now, windowMs);
 
+    const sessionPct = hookStatus?.fiveHourPct != null
+      ? Math.min(hookStatus.fiveHourPct, 100)
+      : Math.min((sessionTokens / this.config.sessionTokenLimit) * 100, 100);
+    const sessionReset = hookStatus?.fiveHourResetAt ?? windowEnd;
+
+    const weeklyPct = hookStatus?.sevenDayPct != null
+      ? Math.min(hookStatus.sevenDayPct, 100)
+      : Math.min((weeklyTokens / this.config.weeklyTokenLimit) * 100, 100);
+    const weeklyReset = hookStatus?.sevenDayResetAt ?? weekResetTime;
+
+    // Time elapsed within the current session window (0–100)
+    const sessionWindowStart = hookStatus?.fiveHourResetAt
+      ? new Date(hookStatus.fiveHourResetAt.getTime() - windowMs)
+      : (windowStart ?? now);
+    const sessionWindowEnd = hookStatus?.fiveHourResetAt ?? windowEnd;
+    const sessionWindowMs = sessionWindowEnd.getTime() - sessionWindowStart.getTime();
+    const sessionTimeElapsedPct = sessionWindowMs > 0
+      ? Math.min(Math.max((now.getTime() - sessionWindowStart.getTime()) / sessionWindowMs * 100, 0), 100)
+      : 0;
+
+    // Time elapsed within the current week (0–100)
+    const weekStart = this.getWeekStart(now);
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    const weeklyTimeElapsedPct = Math.min(Math.max(
+      (now.getTime() - weekStart.getTime()) / weekMs * 100, 0), 100);
+
+    const rawModel = hookStatus?.modelName
+      ?? (entries.length > 0 ? entries[entries.length - 1].model : null);
+    const currentModel = rawModel
+      ? (rawModel.startsWith('claude-') ? this.formatModelName(rawModel) : rawModel)
+      : null;
+
     return {
+      currentModel,
       currentSession: {
         tokenCount: sessionTokens,
         tokenLimit: this.config.sessionTokenLimit,
-        percentage: Math.min((sessionTokens / this.config.sessionTokenLimit) * 100, 100),
+        percentage: sessionPct,
         messageCount: sessionEntries.length,
-        resetTime: windowEnd,
+        resetTime: sessionReset,
         histogram,
+        fromHook: hookStatus?.fiveHourPct != null,
+        timeElapsedPct: sessionTimeElapsedPct,
       },
       weekly: {
-        tokenCount: this.sumTokens(weekEntries),
+        tokenCount: weeklyTokens,
         tokenLimit: this.config.weeklyTokenLimit,
-        percentage: Math.min((this.sumTokens(weekEntries) / this.config.weeklyTokenLimit) * 100, 100),
+        percentage: weeklyPct,
         messageCount: weekEntries.length,
-        resetTime: weekResetTime,
+        resetTime: weeklyReset,
+        fromHook: hookStatus?.sevenDayPct != null,
+        timeElapsedPct: weeklyTimeElapsedPct,
       },
       burnRate,
       lastUpdated: now,
@@ -98,29 +137,47 @@ export class UsageAnalyser {
     return windowStart;
   }
 
+  private formatModelName(id: string): string {
+    // claude-sonnet-4-6 → Claude Sonnet 4.6
+    // claude-haiku-4-5-20251001 → Claude Haiku 4.5
+    return id
+      .replace(/^claude-/, 'Claude ')
+      .replace(/-(\d+)-(\d+).*$/, ' $1.$2')
+      .replace(/(^|\s)\w/g, c => c.toUpperCase());
+  }
+
+  private classifyModel(model: string): 'opus' | 'haiku' | 'sonnet' {
+    const m = model.toLowerCase();
+    if (m.includes('opus')) return 'opus';
+    if (m.includes('haiku')) return 'haiku';
+    return 'sonnet';
+  }
+
   private buildHistogram(
     entries: UsageEntry[],
     windowStart: Date,
     windowMs: number
-  ): { label: string; tokens: number }[] {
+  ): { label: string; tokens: number; byModel: { sonnet: number; opus: number; haiku: number } }[] {
     const BUCKET_MS = 15 * 60 * 1000; // 15-minute buckets
     const bucketCount = Math.ceil(windowMs / BUCKET_MS);
     const startMs = windowStart.getTime();
 
-    const buckets: { label: string; tokens: number }[] = [];
+    const buckets: { label: string; tokens: number; byModel: { sonnet: number; opus: number; haiku: number } }[] = [];
     for (let i = 0; i < bucketCount; i++) {
       const bucketStart = new Date(startMs + i * BUCKET_MS);
       const h = bucketStart.getHours().toString().padStart(2, '0');
       const m = bucketStart.getMinutes().toString().padStart(2, '0');
-      buckets.push({ label: `${h}:${m}`, tokens: 0 });
+      buckets.push({ label: `${h}:${m}`, tokens: 0, byModel: { sonnet: 0, opus: 0, haiku: 0 } });
     }
 
     for (const entry of entries) {
       const offset = entry.timestamp.getTime() - startMs;
       const idx = Math.floor(offset / BUCKET_MS);
       if (idx >= 0 && idx < buckets.length) {
-        buckets[idx].tokens += entry.inputTokens + entry.outputTokens +
+        const entryTokens = entry.inputTokens + entry.outputTokens +
           entry.cacheCreationTokens + entry.cacheReadTokens;
+        buckets[idx].tokens += entryTokens;
+        buckets[idx].byModel[this.classifyModel(entry.model)] += entryTokens;
       }
     }
 

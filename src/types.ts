@@ -20,13 +20,16 @@ export interface SessionBlock {
 }
 
 export interface UsageSummary {
+  currentModel: string | null;
   currentSession: {
     tokenCount: number;
     tokenLimit: number;
     percentage: number;
     messageCount: number;
     resetTime: Date;
-    histogram: { label: string; tokens: number }[];
+    histogram: { label: string; tokens: number; byModel: { sonnet: number; opus: number; haiku: number } }[];
+    fromHook: boolean;
+    timeElapsedPct: number;
   };
   weekly: {
     tokenCount: number;
@@ -34,6 +37,8 @@ export interface UsageSummary {
     percentage: number;
     messageCount: number;
     resetTime: Date;
+    fromHook: boolean;
+    timeElapsedPct: number;
   };
   burnRate: {
     tokensPerMin: number;

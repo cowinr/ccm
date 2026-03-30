@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { UsagePanelProvider } from './webviewProvider';
 import { UsageAnalyser, AnalyserConfig } from './usageAnalyser';
 import { readAllUsageEntries } from './usageReader';
+import { readHookStatus } from './statusReader';
 
 let refreshTimer: NodeJS.Timeout | undefined;
 let statusBarItem: vscode.StatusBarItem;
@@ -83,7 +84,8 @@ function getDataPath(): string | undefined {
 function refreshUsage() {
   try {
     const entries = readAllUsageEntries(getDataPath());
-    const summary = analyser.analyse(entries);
+    const hookStatus = readHookStatus();
+    const summary = analyser.analyse(entries, new Date(), hookStatus);
 
     // Update webview
     panelProvider.update(summary);

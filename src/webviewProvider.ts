@@ -59,26 +59,53 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
     const pct = Math.round(s.currentSession.percentage);
     const barClass = this.getBarClass(s.currentSession.percentage);
 
+    const sessionBadge = s.currentSession.fromHook
+      ? '<span class="badge-live">live</span>'
+      : '<span class="badge-est">est</span>';
+    const weeklyBadge = s.weekly.fromHook
+      ? '<span class="badge-live">live</span>'
+      : '<span class="badge-est">est</span>';
+
+    const sessionTokenLine = s.currentSession.fromHook
+      ? `~${this.formatTokens(s.currentSession.tokenCount)} tokens (from local data)`
+      : `${this.formatTokens(s.currentSession.tokenCount)} / ${this.formatTokens(s.currentSession.tokenLimit)} tokens`;
+    const weeklyTokenLine = s.weekly.fromHook
+      ? `~${this.formatTokens(s.weekly.tokenCount)} tokens (from local data)`
+      : `${this.formatTokens(s.weekly.tokenCount)} / ${this.formatTokens(s.weekly.tokenLimit)} tokens`;
+
+    const sessionTimePct = Math.round(s.currentSession.timeElapsedPct);
+    const weeklyTimePct = Math.round(s.weekly.timeElapsedPct);
+
+    const modelBadge = s.currentModel
+      ? (() => {
+          const m = s.currentModel.toLowerCase();
+          const cls = m.includes('opus') ? 'opus' : m.includes('haiku') ? 'haiku' : 'sonnet';
+          return `<div class="model-badge model-${cls}">${s.currentModel}</div>`;
+        })()
+      : '';
+
     return `<!DOCTYPE html>
 <html>
 <head>
   <link rel="stylesheet" href="${cssUri}">
 </head>
 <body>
+  ${modelBadge}
   <div class="section">
-    <h2>Current session</h2>
+    <h2>Current session ${sessionBadge}</h2>
 
     <div class="metric">
       <div class="metric-subtitle">Resets in ${sessionReset}</div>
       <div class="bar-container">
-        <div class="bar-track">
-          <div class="bar-fill ${barClass}" style="width: ${s.currentSession.percentage}%"></div>
+        <div class="bar-with-marker">
+          <div class="bar-track">
+            <div class="bar-fill ${barClass}" style="width: ${s.currentSession.percentage}%"></div>
+          </div>
+          <div class="bar-time-marker" style="left:${sessionTimePct}%"></div>
         </div>
         <div class="bar-value">${pct}% used</div>
       </div>
-      <div class="metric-subtitle" style="margin-top:4px">
-        ${this.formatTokens(s.currentSession.tokenCount)} / ${this.formatTokens(s.currentSession.tokenLimit)} tokens
-      </div>
+      <div class="metric-subtitle" style="margin-top:4px">${sessionTokenLine}</div>
     </div>
 
     <div class="stats-grid">
@@ -98,19 +125,20 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
   <hr class="divider">
 
   <div class="section">
-    <h2>Weekly usage</h2>
+    <h2>Weekly usage ${weeklyBadge}</h2>
 
     <div class="metric">
       <div class="metric-subtitle">${weeklyReset}</div>
       <div class="bar-container">
-        <div class="bar-track">
-          <div class="bar-fill ${this.getBarClass(s.weekly.percentage)}" style="width: ${s.weekly.percentage}%"></div>
+        <div class="bar-with-marker">
+          <div class="bar-track">
+            <div class="bar-fill ${this.getBarClass(s.weekly.percentage)}" style="width: ${s.weekly.percentage}%"></div>
+          </div>
+          <div class="bar-time-marker" style="left:${weeklyTimePct}%"></div>
         </div>
         <div class="bar-value">${Math.round(s.weekly.percentage)}% used</div>
       </div>
-      <div class="metric-subtitle" style="margin-top:4px">
-        ${this.formatTokens(s.weekly.tokenCount)} / ${this.formatTokens(s.weekly.tokenLimit)} tokens
-      </div>
+      <div class="metric-subtitle" style="margin-top:4px">${weeklyTokenLine}</div>
     </div>
 
     <div class="stats-grid">
@@ -136,24 +164,33 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
 </html>`;
   }
 
-  private renderHistogram(buckets: { label: string; tokens: number }[]): string {
+  private renderHistogram(buckets: { label: string; tokens: number; byModel: { sonnet: number; opus: number; haiku: number } }[]): string {
     const maxTokens = Math.max(...buckets.map(b => b.tokens), 1);
 
-    // Show every 4th label (hourly) to avoid clutter
+    const MODEL_COLORS = { sonnet: '#5b9cf5', opus: '#e74c3c', haiku: '#4caf50' };
+
     const bars = buckets.map((b, i) => {
       const heightPct = (b.tokens / maxTokens) * 100;
       const showLabel = i % 4 === 0;
       const label = showLabel ? `<div class="hist-label">${b.label}</div>` : '';
-      const tooltip = `${b.label}: ${this.formatTokens(b.tokens)}`;
-      return `<div class="hist-col" title="${tooltip}">
-        <div class="hist-bar" style="height: ${heightPct}%"></div>
-        ${label}
-      </div>`;
+
+      const parts: string[] = [];
+      if (b.byModel.opus > 0)   parts.push(`Opus: ${this.formatTokens(b.byModel.opus)}`);
+      if (b.byModel.haiku > 0)  parts.push(`Haiku: ${this.formatTokens(b.byModel.haiku)}`);
+      if (b.byModel.sonnet > 0) parts.push(`Sonnet: ${this.formatTokens(b.byModel.sonnet)}`);
+      const tooltip = `${b.label}: ${this.formatTokens(b.tokens)}${parts.length ? ' — ' + parts.join(', ') : ''}`;
+
+      const segments = (['haiku', 'sonnet', 'opus'] as const)
+        .filter(m => b.byModel[m] > 0)
+        .map(m => `<div style="flex:${b.byModel[m]};background:${MODEL_COLORS[m]};min-height:1px"></div>`)
+        .join('');
+
+      const stack = `<div class="hist-stack" style="height:${heightPct}%">${segments}</div>`;
+
+      return `<div class="hist-col" title="${tooltip}">${stack}${label}</div>`;
     }).join('');
 
-    return `<div class="histogram">
-      <div class="hist-bars">${bars}</div>
-    </div>`;
+    return `<div class="histogram"><div class="hist-bars">${bars}</div></div>`;
   }
 
   private getBarClass(percentage: number): string {
