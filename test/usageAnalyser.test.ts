@@ -20,10 +20,6 @@ describe('UsageAnalyser', () => {
   beforeEach(() => {
     analyser = new UsageAnalyser({
       sessionDurationHours: 5,
-      sessionTokenLimit: 175_000_000,
-      weeklyTokenLimit: 710_000_000,
-      weeklyResetDay: 5,
-      weeklyResetHour: 9,
     });
   });
 
@@ -93,37 +89,49 @@ describe('UsageAnalyser', () => {
       expect(summary.currentSession.messageCount).toBe(2);
     });
 
-    it('calculates percentage against token limit', () => {
-      const analyser2 = new UsageAnalyser({
-        sessionDurationHours: 5,
-        sessionTokenLimit: 10000,
-        weeklyTokenLimit: 710_000_000,
-        weeklyResetDay: 5,
-        weeklyResetHour: 9,
-      });
+    it('returns 0% when no hook data (token limits removed)', () => {
       const now = new Date('2026-03-29T14:00:00Z');
       const entries: UsageEntry[] = [
         makeEntry({ timestamp: new Date('2026-03-29T12:00:00Z'), inputTokens: 2000, outputTokens: 1000 }),
       ];
 
-      const summary = analyser2.analyse(entries, now);
-      expect(summary.currentSession.percentage).toBe(30);
+      const summary = analyser.analyse(entries, now);
+      expect(summary.currentSession.percentage).toBe(0);
     });
 
-    it('caps percentage at 100', () => {
-      const analyser2 = new UsageAnalyser({
-        sessionDurationHours: 5,
-        sessionTokenLimit: 1000,
-        weeklyTokenLimit: 710_000_000,
-        weeklyResetDay: 5,
-        weeklyResetHour: 9,
-      });
+    it('uses hook percentage when live data present', () => {
       const now = new Date('2026-03-29T14:00:00Z');
       const entries: UsageEntry[] = [
-        makeEntry({ timestamp: new Date('2026-03-29T12:00:00Z'), inputTokens: 2000, outputTokens: 1000 }),
+        makeEntry({ timestamp: new Date('2026-03-29T12:00:00Z') }),
       ];
+      const hookStatus = {
+        fiveHourPct: 42,
+        fiveHourResetAt: new Date('2026-03-29T17:00:00Z'),
+        sevenDayPct: 15,
+        sevenDayResetAt: new Date('2026-04-04T09:00:00Z'),
+        modelName: 'Claude Sonnet 4.6',
+        updatedAt: now,
+        isStale: false,
+      };
 
-      const summary = analyser2.analyse(entries, now);
+      const summary = analyser.analyse(entries, now, hookStatus);
+      expect(summary.currentSession.percentage).toBe(42);
+      expect(summary.weekly.percentage).toBe(15);
+    });
+
+    it('caps hook percentage at 100', () => {
+      const now = new Date('2026-03-29T14:00:00Z');
+      const hookStatus = {
+        fiveHourPct: 110,
+        fiveHourResetAt: new Date('2026-03-29T17:00:00Z'),
+        sevenDayPct: null,
+        sevenDayResetAt: null,
+        modelName: null,
+        updatedAt: now,
+        isStale: false,
+      };
+
+      const summary = analyser.analyse([], now, hookStatus);
       expect(summary.currentSession.percentage).toBe(100);
     });
   });
@@ -178,10 +186,6 @@ describe('UsageAnalyser', () => {
     it('updates window duration', () => {
       analyser.updateConfig({
         sessionDurationHours: 3,
-        sessionTokenLimit: 175_000_000,
-        weeklyTokenLimit: 710_000_000,
-        weeklyResetDay: 5,
-        weeklyResetHour: 9,
       });
 
       const now = new Date('2026-03-29T14:00:00Z');

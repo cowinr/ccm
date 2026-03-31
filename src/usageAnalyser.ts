@@ -3,10 +3,6 @@ import { HookStatus } from './statusReader';
 
 export interface AnalyserConfig {
   sessionDurationHours: number;
-  sessionTokenLimit: number;
-  weeklyTokenLimit: number;
-  weeklyResetDay: number;  // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
-  weeklyResetHour: number; // 0-23, local time
 }
 
 export class UsageAnalyser {
@@ -51,11 +47,11 @@ export class UsageAnalyser {
 
     const sessionPct = hookStatus?.fiveHourPct != null
       ? Math.min(hookStatus.fiveHourPct, 100)
-      : Math.min((sessionTokens / this.config.sessionTokenLimit) * 100, 100);
+      : 0;
 
     const weeklyPct = hookStatus?.sevenDayPct != null
       ? Math.min(hookStatus.sevenDayPct, 100)
-      : Math.min((weeklyTokens / this.config.weeklyTokenLimit) * 100, 100);
+      : 0;
     const weeklyReset = hookStatus?.sevenDayResetAt ?? weekResetTime;
     const sessionWindowMs = sessionWindowEnd.getTime() - sessionWindowStart.getTime();
     const sessionTimeElapsedPct = sessionWindowMs > 0
@@ -78,7 +74,6 @@ export class UsageAnalyser {
       currentModel,
       currentSession: {
         tokenCount: sessionTokens,
-        tokenLimit: this.config.sessionTokenLimit,
         percentage: sessionPct,
         messageCount: sessionEntries.length,
         resetTime: sessionReset,
@@ -89,7 +84,6 @@ export class UsageAnalyser {
       },
       weekly: {
         tokenCount: weeklyTokens,
-        tokenLimit: this.config.weeklyTokenLimit,
         percentage: weeklyPct,
         messageCount: weekEntries.length,
         resetTime: weeklyReset,
@@ -204,15 +198,18 @@ export class UsageAnalyser {
   }
 
   private getWeekStart(date: Date): Date {
+    // Fallback heuristic: Anthropic resets weekly on Fridays at 09:00 local time
+    const RESET_DAY = 5;  // Friday
+    const RESET_HOUR = 9;
+
     const d = new Date(date);
     const currentDay = d.getDay();
-    const resetDay = this.config.weeklyResetDay;
 
-    let daysSinceReset = currentDay - resetDay;
-    if (daysSinceReset < 0) daysSinceReset += 7;
+    let daysSinceReset = currentDay - RESET_DAY;
+    if (daysSinceReset < 0) { daysSinceReset += 7; }
 
     d.setDate(d.getDate() - daysSinceReset);
-    d.setHours(this.config.weeklyResetHour, 0, 0, 0);
+    d.setHours(RESET_HOUR, 0, 0, 0);
 
     if (d > date) {
       d.setDate(d.getDate() - 7);

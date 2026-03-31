@@ -39,32 +39,6 @@
           "minimum": 1,
           "description": "Estimated session duration for reset calculation (hours)"
         },
-        "ccm.sessionTokenLimit": {
-          "type": "number",
-          "default": 250000000,
-          "minimum": 1000000,
-          "description": "Estimated session token limit (default 175M, calibrate against Anthropic console)"
-        },
-        "ccm.weeklyTokenLimit": {
-          "type": "number",
-          "default": 710000000,
-          "minimum": 1000000,
-          "description": "Estimated weekly token limit (default 710M, calibrate against Anthropic console)"
-        },
-        "ccm.weeklyResetDay": {
-          "type": "number",
-          "default": 5,
-          "minimum": 0,
-          "maximum": 6,
-          "description": "Day of week for weekly reset (0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat)"
-        },
-        "ccm.weeklyResetHour": {
-          "type": "number",
-          "default": 9,
-          "minimum": 0,
-          "maximum": 23,
-          "description": "Hour of day for weekly reset (local time, 0-23)"
-        },
         "ccm.dataPath": {
           "type": "string",
           "default": "",

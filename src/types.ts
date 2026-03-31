@@ -23,7 +23,6 @@ export interface UsageSummary {
   currentModel: string | null;
   currentSession: {
     tokenCount: number;
-    tokenLimit: number;
     percentage: number;
     messageCount: number;
     resetTime: Date;
@@ -34,7 +33,6 @@ export interface UsageSummary {
   };
   weekly: {
     tokenCount: number;
-    tokenLimit: number;
     percentage: number;
     messageCount: number;
     resetTime: Date;

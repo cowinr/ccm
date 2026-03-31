@@ -72,10 +72,6 @@ function loadAnalyserConfig(): AnalyserConfig {
   const config = vscode.workspace.getConfiguration('ccm');
   return {
     sessionDurationHours: config.get('sessionDurationHours', 5),
-    sessionTokenLimit: config.get('sessionTokenLimit', 250_000_000),
-    weeklyTokenLimit: config.get('weeklyTokenLimit', 710_000_000),
-    weeklyResetDay: config.get('weeklyResetDay', 5),
-    weeklyResetHour: config.get('weeklyResetHour', 9),
   };
 }
 
@@ -103,7 +99,7 @@ function refreshUsage() {
     const weekTok = formatTokensCompact(summary.weekly.tokenCount);
 
     statusBarItem.text = `S ${sBar} ${sPct}%  W ${wBar} ${wPct}%`;
-    statusBarItem.tooltip = `Session: ${sPct}% (${sessionTok} / ${formatTokensCompact(summary.currentSession.tokenLimit)})\n${summary.currentSession.messageCount} msgs, ${Math.round(summary.burnRate.tokensPerMin)} tok/min\nWeekly: ${weekTok} tokens, ${summary.weekly.messageCount} msgs`;
+    statusBarItem.tooltip = `Session: ${sPct}% (~${sessionTok} tokens)\n${summary.currentSession.messageCount} msgs, ${Math.round(summary.burnRate.tokensPerMin)} tok/min\nWeekly: ~${weekTok} tokens, ${summary.weekly.messageCount} msgs`;
 
     if (sPct >= 85) {
       statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');

@@ -72,12 +72,8 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
         ? '<span class="badge-est">Stale</span>'
         : '<span class="badge-est">Estimated</span>';
 
-    const sessionTokenLine = s.currentSession.fromHook
-      ? `~${this.formatTokens(s.currentSession.tokenCount)} tokens (from local data)`
-      : `${this.formatTokens(s.currentSession.tokenCount)} / ${this.formatTokens(s.currentSession.tokenLimit)} tokens`;
-    const weeklyTokenLine = s.weekly.fromHook
-      ? `~${this.formatTokens(s.weekly.tokenCount)} tokens (from local data)`
-      : `${this.formatTokens(s.weekly.tokenCount)} / ${this.formatTokens(s.weekly.tokenLimit)} tokens`;
+    const sessionTokenLine = `~${this.formatTokens(s.currentSession.tokenCount)} tokens`;
+    const weeklyTokenLine = `~${this.formatTokens(s.weekly.tokenCount)} tokens`;
 
     const sessionTimePct = Math.round(s.currentSession.timeElapsedPct);
     const weeklyTimePct = Math.round(s.weekly.timeElapsedPct);
