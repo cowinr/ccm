@@ -20,41 +20,43 @@ export class UsageAnalyser {
     const windowMs = this.config.sessionDurationHours * 60 * 60 * 1000;
 
     // Fixed window: find the start of the current window by looking for a gap >= windowMs
-    const windowStart = this.findWindowStart(entries, now, windowMs);
-    const windowEnd = windowStart
-      ? new Date(windowStart.getTime() + windowMs)
+    const jsonlWindowStart = this.findWindowStart(entries, now, windowMs);
+    const jsonlWindowEnd = jsonlWindowStart
+      ? new Date(jsonlWindowStart.getTime() + windowMs)
       : now;
 
+    const sessionReset = hookStatus?.fiveHourResetAt ?? jsonlWindowEnd;
+    const weekResetTime = this.getNextWeeklyReset(now);
+
+    // Prefer live hook data for window boundaries; fall back to JSONL heuristic
+    const sessionWindowStart = hookStatus?.fiveHourResetAt
+      ? new Date(hookStatus.fiveHourResetAt.getTime() - windowMs)
+      : (jsonlWindowStart ?? now);
+    const sessionWindowEnd = hookStatus?.fiveHourResetAt ?? jsonlWindowEnd;
+
     // If window has expired, no active session
-    const windowActive = windowStart !== null && windowEnd > now;
+    const windowActive = sessionWindowEnd > now &&
+      (hookStatus?.fiveHourResetAt != null || jsonlWindowStart !== null);
     const sessionEntries = windowActive
-      ? entries.filter(e => e.timestamp >= windowStart && e.timestamp <= now)
+      ? entries.filter(e => e.timestamp >= sessionWindowStart && e.timestamp <= now)
       : [];
 
     const weekEntries = this.getCurrentWeekEntries(entries, now);
-    const weekResetTime = this.getNextWeeklyReset(now);
     const burnRate = this.calculateBurnRate(sessionEntries, now);
 
     const sessionTokens = this.sumTokens(sessionEntries);
     const weeklyTokens = this.sumTokens(weekEntries);
 
-    const histogram = this.buildHistogram(sessionEntries, windowStart || now, windowMs);
+    const histogram = this.buildHistogram(sessionEntries, sessionWindowStart, windowMs);
 
     const sessionPct = hookStatus?.fiveHourPct != null
       ? Math.min(hookStatus.fiveHourPct, 100)
       : Math.min((sessionTokens / this.config.sessionTokenLimit) * 100, 100);
-    const sessionReset = hookStatus?.fiveHourResetAt ?? windowEnd;
 
     const weeklyPct = hookStatus?.sevenDayPct != null
       ? Math.min(hookStatus.sevenDayPct, 100)
       : Math.min((weeklyTokens / this.config.weeklyTokenLimit) * 100, 100);
     const weeklyReset = hookStatus?.sevenDayResetAt ?? weekResetTime;
-
-    // Time elapsed within the current session window (0–100)
-    const sessionWindowStart = hookStatus?.fiveHourResetAt
-      ? new Date(hookStatus.fiveHourResetAt.getTime() - windowMs)
-      : (windowStart ?? now);
-    const sessionWindowEnd = hookStatus?.fiveHourResetAt ?? windowEnd;
     const sessionWindowMs = sessionWindowEnd.getTime() - sessionWindowStart.getTime();
     const sessionTimeElapsedPct = sessionWindowMs > 0
       ? Math.min(Math.max((now.getTime() - sessionWindowStart.getTime()) / sessionWindowMs * 100, 0), 100)

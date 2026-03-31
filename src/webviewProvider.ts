@@ -57,7 +57,7 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
     const sessionReset = this.formatTimeRemaining(s.currentSession.resetTime);
     const weeklyReset = this.formatResetTime(s.weekly.resetTime);
     const pct = Math.round(s.currentSession.percentage);
-    const barClass = this.getBarClass(s.currentSession.percentage);
+    const barClass = this.getBarClass(s.currentSession.percentage, s.currentSession.timeElapsedPct);
 
     const sessionBadge = s.currentSession.fromHook
       ? '<span class="badge-live">live</span>'
@@ -132,7 +132,7 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
       <div class="bar-container">
         <div class="bar-with-marker">
           <div class="bar-track">
-            <div class="bar-fill ${this.getBarClass(s.weekly.percentage)}" style="width: ${s.weekly.percentage}%"></div>
+            <div class="bar-fill ${this.getBarClass(s.weekly.percentage, s.weekly.timeElapsedPct)}" style="width: ${s.weekly.percentage}%"></div>
           </div>
           <div class="bar-time-marker" style="left:${weeklyTimePct}%"></div>
         </div>
@@ -193,9 +193,9 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
     return `<div class="histogram"><div class="hist-bars">${bars}</div></div>`;
   }
 
-  private getBarClass(percentage: number): string {
-    if (percentage >= 85) return 'danger';
-    if (percentage >= 60) return 'warning';
+  private getBarClass(percentage: number, timeElapsedPct: number): string {
+    if (percentage >= timeElapsedPct) return 'danger';
+    if (percentage >= timeElapsedPct * 0.6) return 'warning';
     return '';
   }
 
