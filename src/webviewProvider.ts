@@ -57,14 +57,20 @@ export class UsagePanelProvider implements vscode.WebviewViewProvider {
     const sessionReset = this.formatTimeRemaining(s.currentSession.resetTime);
     const weeklyReset = this.formatResetTime(s.weekly.resetTime);
     const pct = Math.round(s.currentSession.percentage);
-    const barClass = this.getBarClass(s.currentSession.percentage, s.currentSession.timeElapsedPct);
+    const barClass = s.currentSession.hookIsStale
+      ? 'stale'
+      : this.getBarClass(s.currentSession.percentage, s.currentSession.timeElapsedPct);
 
-    const sessionBadge = s.currentSession.fromHook
+    const sessionBadge = s.currentSession.fromHook && !s.currentSession.hookIsStale
       ? '<span class="badge-live">live</span>'
-      : '<span class="badge-est">est</span>';
-    const weeklyBadge = s.weekly.fromHook
+      : s.currentSession.hookIsStale
+        ? '<span class="badge-est">Stale</span>'
+        : '<span class="badge-est">Estimated</span>';
+    const weeklyBadge = s.weekly.fromHook && !s.weekly.hookIsStale
       ? '<span class="badge-live">live</span>'
-      : '<span class="badge-est">est</span>';
+      : s.weekly.hookIsStale
+        ? '<span class="badge-est">Stale</span>'
+        : '<span class="badge-est">Estimated</span>';
 
     const sessionTokenLine = s.currentSession.fromHook
       ? `~${this.formatTokens(s.currentSession.tokenCount)} tokens (from local data)`

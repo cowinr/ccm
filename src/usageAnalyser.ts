@@ -84,6 +84,7 @@ export class UsageAnalyser {
         resetTime: sessionReset,
         histogram,
         fromHook: hookStatus?.fiveHourPct != null,
+        hookIsStale: hookStatus?.isStale ?? false,
         timeElapsedPct: sessionTimeElapsedPct,
       },
       weekly: {
@@ -93,6 +94,7 @@ export class UsageAnalyser {
         messageCount: weekEntries.length,
         resetTime: weeklyReset,
         fromHook: hookStatus?.sevenDayPct != null,
+        hookIsStale: hookStatus?.isStale ?? false,
         timeElapsedPct: weeklyTimeElapsedPct,
       },
       burnRate,

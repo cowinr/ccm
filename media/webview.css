@@ -158,6 +158,7 @@ h3 {
 
 .bar-fill.warning { background: var(--warning); }
 .bar-fill.danger { background: var(--danger); }
+.bar-fill.stale { background: #666; }
 
 .bar-value {
   font-size: 12px;

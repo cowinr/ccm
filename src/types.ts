@@ -29,6 +29,7 @@ export interface UsageSummary {
     resetTime: Date;
     histogram: { label: string; tokens: number; byModel: { sonnet: number; opus: number; haiku: number } }[];
     fromHook: boolean;
+    hookIsStale: boolean;
     timeElapsedPct: number;
   };
   weekly: {
@@ -38,6 +39,7 @@ export interface UsageSummary {
     messageCount: number;
     resetTime: Date;
     fromHook: boolean;
+    hookIsStale: boolean;
     timeElapsedPct: number;
   };
   burnRate: {
