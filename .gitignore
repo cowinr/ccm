@@ -1,6 +1,5 @@
 out/
 node_modules/
 coverage/
-*.vsix
 .vscode-test/
 *.png
