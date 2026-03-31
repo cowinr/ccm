@@ -3,6 +3,7 @@ import { UsagePanelProvider } from './webviewProvider';
 import { UsageAnalyser, AnalyserConfig } from './usageAnalyser';
 import { readAllUsageEntries } from './usageReader';
 import { readHookStatus } from './statusReader';
+import { checkAndPromptBridgeInstall } from './bridgeInstaller';
 
 let refreshTimer: NodeJS.Timeout | undefined;
 let statusBarItem: vscode.StatusBarItem;
@@ -53,6 +54,9 @@ export function activate(context: vscode.ExtensionContext) {
       }
     })
   );
+
+  // Check bridge is installed (prompts user if not)
+  checkAndPromptBridgeInstall(context);
 
   // Initial refresh and start timer
   refreshUsage();
