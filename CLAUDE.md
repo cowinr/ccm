@@ -23,9 +23,10 @@ Then reload VS Code: Cmd+Shift+P > Developer: Reload Window
 
 ```
 src/
-  extension.ts        - VS Code lifecycle, status bar, timer
+  extension.ts        - VS Code lifecycle, status bar, timer, bridge install prompt
   webviewProvider.ts  - Sidebar panel HTML/CSS rendering
   usageAnalyser.ts    - Token aggregation, window detection, hook data blending
+  bridgeInstaller.ts  - Detects/installs ccm-bridge.js and patches settings.json
   statusReader.ts     - Reads ~/.claude/ccm-status.json (live hook data)
   usageReader.ts      - JSONL file parsing from ~/.claude/projects/
   pricing.ts          - Model pricing (kept but not shown in UI)
@@ -35,6 +36,8 @@ test/
 media/
   webview.css         - Dark theme styles
   icon.svg            - Activity bar icon
+resources/
+  ccm-bridge.js       - Bundled bridge script, copied to ~/.claude/ on install
 ~/.claude/
   ccm-bridge.js       - statusLine hook bridge: reads stdin JSON, writes ccm-status.json
   ccm-status.json     - Live rate limit data written by ccm-bridge.js
