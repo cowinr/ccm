@@ -6,7 +6,7 @@ VS Code extension that monitors Claude Code token usage with accurate live data 
 
 ```bash
 npm run compile        # TypeScript compile
-npm test               # Jest tests (27 tests)
+npm test               # Jest tests (28 tests)
 npm run watch          # Watch mode
 npx vsce package --allow-missing-repository  # Build .vsix
 code --install-extension claude-code-monitor-0.1.0.vsix --force  # Install
@@ -55,5 +55,5 @@ The UI shows a green **live** badge / grey **est** badge to indicate which sourc
 - **Time marker on usage bar**: Tick shows current position in the window so you can see if you're ahead/behind average burn
 - **Model badge**: Active model shown as coloured pill — blue=Sonnet, red=Opus, green=Haiku
 - **No cost display**: Removed because Anthropic's limits are opaque and don't correlate with API costs
-- **Token limits**: Calibrated defaults (250M session, 710M weekly) but configurable; only used as fallback when hook data absent
+- **No token limits**: Removed — Anthropic's limits are opaque and estimates were misleading. Percentages show 0% when bridge is absent rather than guessing
 - **Performance**: Only reads JSONL files modified in last 7 days

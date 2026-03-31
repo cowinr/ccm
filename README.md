@@ -33,8 +33,8 @@ Make sure stdin is captured with `input=$(cat)` before the bridge call, and repl
 
 ## What it shows
 
-- **Session usage** — 5-hour rolling window (live from Anthropic's servers when bridge is active)
-- **Weekly usage** — 7-day rolling window
+- **Session usage** — 5-hour fixed window (live percentage from Anthropic's servers when bridge is active)
+- **Weekly usage** — 7-day fixed window
 - **Active model** — Sonnet / Opus / Haiku with colour-coded badge
 - **Burn rate** — tokens per minute
 - **Histogram** — 15-minute buckets over the last 7 days
@@ -56,8 +56,7 @@ Settings are under `ccm.*` in VS Code preferences:
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `ccm.refreshIntervalSec` | 60 | How often to poll for updates |
-| `ccm.sessionTokenLimit` | 250,000,000 | Fallback session token limit |
-| `ccm.weeklyTokenLimit` | 710,000,000 | Fallback weekly token limit |
+| `ccm.sessionDurationHours` | 5 | Session window length used for histogram |
 | `ccm.dataPath` | (auto) | Override path to `~/.claude/projects/` |
 
 ## Building from source
