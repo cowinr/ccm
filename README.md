@@ -33,7 +33,7 @@ If you already have a custom `statusLine` command in `~/.claude/settings.json`, 
 
 ```
 node "C:\Users\<you>\.claude\ccm-bridge.js"        # Windows
-node "/Users/<you>/.claude/ccm-bridge.js"           # macOS/Linux
+node "/Users/<you>/.claude/ccm-bridge.js"          # macOS/Linux
 ```
 
 The Output panel (Claude Code Monitor channel) will show the exact path for your machine when you click Install.

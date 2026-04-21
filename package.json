@@ -3,7 +3,7 @@
   "displayName": "Claude Code Monitor",
   "description": "Monitor Claude Code token and message usage in the sidebar",
   "publisher": "cowinr",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "engines": { "vscode": "^1.80.0" },
   "categories": ["Other"],
   "keywords": ["claude", "anthropic", "usage", "monitor", "limits"],
