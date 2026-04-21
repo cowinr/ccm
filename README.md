@@ -29,13 +29,14 @@ Restart any running Claude Code sessions to start receiving live data.
 
 ### Bridge setup (manual fallback)
 
-If you already have a custom `statusLine` command in `~/.claude/settings.json`, the extension can't safely patch it automatically. Instead, add this to your statusLine command:
+If you already have a custom `statusLine` command in `~/.claude/settings.json`, the extension can't safely patch it automatically. Add the bridge call to your existing `statusLine` command:
 
-```bash
-input=$(cat); echo "$input" | node ~/.claude/ccm-bridge.js >/dev/null 2>&1
+```
+node "C:\Users\<you>\.claude\ccm-bridge.js"        # Windows
+node "/Users/<you>/.claude/ccm-bridge.js"           # macOS/Linux
 ```
 
-Make sure stdin is captured with `input=$(cat)` before the bridge call, and replace any bare `cat` elsewhere in your command with `echo "$input"`.
+The Output panel (Claude Code Monitor channel) will show the exact path for your machine when you click Install.
 
 ## What it shows
 

@@ -7,7 +7,10 @@ const CLAUDE_DIR = path.join(os.homedir(), '.claude');
 const BRIDGE_DEST = path.join(CLAUDE_DIR, 'ccm-bridge.js');
 const SETTINGS_PATH = path.join(CLAUDE_DIR, 'settings.json');
 
-const BRIDGE_CALL = `input=$(cat); echo "$input" | node ~/.claude/ccm-bridge.js >/dev/null 2>&1`;
+function getBridgeCall(): string {
+  // Use the absolute path so ~ expansion is never needed (Windows doesn't support it)
+  return `node "${BRIDGE_DEST}"`;
+}
 
 export function checkAndPromptBridgeInstall(context: vscode.ExtensionContext): void {
   if (isBridgeConfigured()) {
@@ -91,7 +94,7 @@ function patchSettings(): PatchResult {
   }
 
   if (!settings.statusLine) {
-    settings.statusLine = { type: 'command', command: BRIDGE_CALL };
+    settings.statusLine = { type: 'command', command: getBridgeCall() };
     fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 4));
     return 'patched';
   }
@@ -102,21 +105,15 @@ function patchSettings(): PatchResult {
 
 function showManualInstructions(): void {
   const channel = vscode.window.createOutputChannel('Claude Code Monitor');
-  channel.appendLine('CCM bridge script has been installed to ~/.claude/ccm-bridge.js');
+  channel.appendLine(`CCM bridge script has been installed to: ${BRIDGE_DEST}`);
   channel.appendLine('');
   channel.appendLine(
     'Your ~/.claude/settings.json already has a custom statusLine command.'
   );
-  channel.appendLine('Add the following to the start of your statusLine command:');
+  channel.appendLine('You will need to manually add the bridge call to your statusLine command.');
   channel.appendLine('');
-  channel.appendLine(`  ${BRIDGE_CALL} &`);
-  channel.appendLine('');
-  channel.appendLine(
-    'Make sure to capture stdin first with: input=$(cat)'
-  );
-  channel.appendLine(
-    'then replace any bare `cat` in your existing command with: echo "$input"'
-  );
+  channel.appendLine('Bridge command:');
+  channel.appendLine(`  ${getBridgeCall()}`);
   channel.show();
 
   vscode.window.showWarningMessage(
