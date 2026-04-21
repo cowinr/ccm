@@ -9,13 +9,15 @@ npm run compile        # TypeScript compile
 npm test               # Jest tests (28 tests)
 npm run watch          # Watch mode
 npx vsce package --allow-missing-repository  # Build .vsix
-code --install-extension claude-code-monitor-0.1.0.vsix --force  # Install
+code --install-extension claude-code-monitor-0.1.1.vsix --force  # Install
 ```
 
 Full iteration cycle:
 ```bash
-npm run compile && npx vsce package --allow-missing-repository && code --install-extension claude-code-monitor-0.1.0.vsix --force
+npm run compile && npx vsce package --allow-missing-repository && code --install-extension claude-code-monitor-0.1.1.vsix --force
 ```
+
+Only one `.vsix` file should exist in the repo at any time. When building a new version, `git rm` the old one before committing.
 
 Then reload VS Code: Cmd+Shift+P > Developer: Reload Window
 
@@ -79,6 +81,12 @@ resources/
 **Fallback (estimated):** JSONL files at `~/.claude/projects/`. Used for: token counts, burn rate, message count, histogram. When live data is present, JSONL-based percentages are ignored.
 
 The UI shows a green **live** badge / grey **est** badge to indicate which source is driving each section.
+
+## Platform Notes
+
+- Colleagues run Claude Code **natively on Windows** (not WSL) — any shell commands or file paths added to the codebase must be cross-platform
+- Path construction: always use `path.join()` and `os.homedir()` — never hardcode `~` or `/`
+- The statusLine hook command written to `settings.json` must not use bash syntax
 
 ## Key Design Decisions
 
