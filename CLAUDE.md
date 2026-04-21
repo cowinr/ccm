@@ -9,12 +9,12 @@ npm run compile        # TypeScript compile
 npm test               # Jest tests (28 tests)
 npm run watch          # Watch mode
 npx vsce package --allow-missing-repository  # Build .vsix
-code --install-extension claude-code-monitor-0.1.1.vsix --force  # Install
+code --install-extension claude-code-monitor-0.1.2.vsix --force  # Install (use code.cmd on Windows)
 ```
 
 Full iteration cycle:
 ```bash
-npm run compile && npx vsce package --allow-missing-repository && code --install-extension claude-code-monitor-0.1.1.vsix --force
+npm run compile && npx vsce package --allow-missing-repository && code --install-extension claude-code-monitor-0.1.2.vsix --force
 ```
 
 Only one `.vsix` file should exist in the repo at any time. When building a new version, `git rm` the old one before committing.
@@ -87,6 +87,7 @@ The UI shows a green **live** badge / grey **est** badge to indicate which sourc
 - Colleagues run Claude Code **natively on Windows** (not WSL) — any shell commands or file paths added to the codebase must be cross-platform
 - Path construction: always use `path.join()` and `os.homedir()` — never hardcode `~` or `/`
 - The statusLine hook command written to `settings.json` must not use bash syntax
+- **Windows VS Code CLI**: In PowerShell, `code` resolves to `Code.exe` (the GUI), not `code.cmd` (the CLI). Always use `code.cmd` explicitly in PowerShell scripts — `code --install-extension` silently does nothing otherwise. Same issue in Git Bash (the `code` shell script is WSL-aware and opens the GUI).
 
 ## Key Design Decisions
 
