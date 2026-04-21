@@ -19,6 +19,35 @@ npm run compile && npx vsce package --allow-missing-repository && code --install
 
 Then reload VS Code: Cmd+Shift+P > Developer: Reload Window
 
+## Releasing a New Version
+
+1. Bump the version in `package.json` (e.g. `0.1.0` → `0.2.0`)
+2. Build and package:
+   ```bash
+   npm run compile && npx vsce package --allow-missing-repository
+   ```
+3. Test locally:
+   ```bash
+   code --install-extension claude-code-monitor-X.Y.Z.vsix --force
+   ```
+4. Commit and push:
+   ```bash
+   git add package.json package-lock.json claude-code-monitor-X.Y.Z.vsix
+   git commit -m "chore: release vX.Y.Z"
+   git push
+   ```
+5. Create a GitHub release with the .vsix attached:
+   ```bash
+   gh release create vX.Y.Z claude-code-monitor-X.Y.Z.vsix \
+     --title "vX.Y.Z" \
+     --notes "What changed in this release."
+   ```
+
+The `install.sh` script always fetches the latest release, so colleagues just re-run the same one-liner to upgrade:
+```bash
+curl -fsSL https://raw.githubusercontent.com/cowinr/ccm/main/install.sh | bash
+```
+
 ## Architecture
 
 ```
