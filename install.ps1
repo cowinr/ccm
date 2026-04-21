@@ -16,7 +16,15 @@ Write-Host "Downloading $($asset.browser_download_url)..."
 Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $tmp
 
 Write-Host "Installing extension..."
-code --install-extension $tmp --force
+$codeCli = Get-Command "code.cmd" -ErrorAction SilentlyContinue
+if (-not $codeCli) {
+    $codeCli = Get-Command "code" -ErrorAction SilentlyContinue
+}
+if (-not $codeCli) {
+    Write-Error "Could not find 'code' or 'code.cmd' in PATH. Is VS Code installed and in PATH?"
+    exit 1
+}
+& $codeCli.Source --install-extension $tmp --force
 
 Remove-Item $tmp
 Write-Host ""
