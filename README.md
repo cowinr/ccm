@@ -4,10 +4,8 @@ VS Code extension that monitors Claude Code token usage with live rate-limit dat
 
 ## Installation
 
-### One-liner install (replace version as needed)
-
 ```bash
-code --install-extension claude-code-monitor-0.1.0.vsix --force
+curl -fsSL https://raw.githubusercontent.com/cowinr/ccm/main/install.sh | bash
 ```
 
 Then reload VS Code: `Cmd+Shift+P` → **Developer: Reload Window**
