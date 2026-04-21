@@ -47,4 +47,7 @@ gh release create vX.Y.Z claude-code-monitor-X.Y.Z.vsix \
   --notes "Summary of what changed."
 ```
 
-Once the release is published, anyone running the install one-liner will get the new version automatically.
+Once the release is published, anyone running the install one-liner will get the new version automatically:
+
+- macOS/Linux: `curl -fsSL https://raw.githubusercontent.com/cowinr/ccm/main/install.sh | bash`
+- Windows: `irm https://raw.githubusercontent.com/cowinr/ccm/main/install.ps1 | iex`

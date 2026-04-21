@@ -4,11 +4,19 @@ VS Code extension that monitors Claude Code token usage with live rate-limit dat
 
 ## Installation
 
+**macOS / Linux:**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/cowinr/ccm/main/install.sh | bash
 ```
 
-Then reload VS Code: `Cmd+Shift+P` → **Developer: Reload Window**
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/cowinr/ccm/main/install.ps1 | iex
+```
+
+Then reload VS Code: `Cmd+Shift+P` / `Ctrl+Shift+P` → **Developer: Reload Window**
 
 ### Bridge setup (automatic)
 
